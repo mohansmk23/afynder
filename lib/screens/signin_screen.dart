@@ -17,9 +17,14 @@ class _SigninScreenState extends State<SigninScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Icon(
-                Icons.close,
-                color: Colors.grey,
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: Icon(
+                  Icons.close,
+                  color: Colors.grey,
+                ),
               ),
               SizedBox(
                 height: 24.0,
@@ -62,8 +67,10 @@ class _SigninScreenState extends State<SigninScreen> {
                     "Sign in",
                     style: TextStyle(color: Colors.white, fontSize: 20.0),
                   ),
-                  color: ThemeColors.themeColor1,
-                  onPressed: () {},
+                  color: ThemeColors.themeOrange,
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/categories');
+                  },
                 ),
               ),
               SizedBox(
@@ -79,9 +86,14 @@ class _SigninScreenState extends State<SigninScreen> {
                 height: 24.0,
               ),
               Center(
-                child: Text(
-                  "Not a member? Sign-up now",
-                  textAlign: TextAlign.center,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/signup');
+                  },
+                  child: Text(
+                    "Not a member? Sign-up now",
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               )
             ],

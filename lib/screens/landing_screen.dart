@@ -1,23 +1,79 @@
 import 'package:afynder/constants/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 
 class LandingScreen extends StatefulWidget {
   @override
   _LandingScreenState createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _LandingScreenState extends State<LandingScreen>
+    with SingleTickerProviderStateMixin {
+  List<Widget> sliderImages = [
+    Image.asset(
+      'assets/intro1.jpg',
+      fit: BoxFit.fill,
+    ),
+    Image.asset(
+      'assets/intro2.jpg',
+      fit: BoxFit.fill,
+    ),
+    Image.asset(
+      'assets/introimage3.jpg',
+      fit: BoxFit.fill,
+    ),
+  ];
+
+  AnimationController controller;
+  int _sliderCurrentIndex = 0;
+  PageController _pageController =
+      PageController(initialPage: 0, keepPage: false);
+
+  @override
+  void initState() {
+    controller =
+        AnimationController(vsync: this, duration: Duration(seconds: 3));
+
+    controller.forward();
+
+    _pageController.addListener(() {
+      if (_pageController.page % 1 == 0) {
+        _sliderCurrentIndex = _pageController.page.floor();
+        print(_pageController.page);
+        controller.reset();
+        controller.forward();
+      }
+    });
+
+    controller.addListener(() {
+      if (controller.isCompleted) {
+        if (_sliderCurrentIndex != 2) {
+          controller.reset();
+          _sliderCurrentIndex++;
+          _pageController.animateToPage(_sliderCurrentIndex,
+              duration: Duration(milliseconds: 500),
+              curve: Curves.easeInOutQuad);
+          //_pageController.jumpTo(_sliderCurrentIndex.toDouble());
+        }
+      }
+      setState(() {});
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
+        mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           Expanded(
+            flex: 8,
             child: Stack(fit: StackFit.expand, children: <Widget>[
-              Image.network(
-                'https://wallpaperaccess.com/full/1455126.jpg',
-                fit: BoxFit.fill,
+              PageView(
+                controller: _pageController,
+                children: sliderImages,
               ),
               SafeArea(
                 child: Padding(
@@ -25,33 +81,87 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Icon(
-                        Icons.close,
-                        color: Colors.white,
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Icon(
+                          Icons.close,
+                          color: ThemeColors.themeColor5,
+                        ),
                       ),
                       SizedBox(
-                        height: 24.0,
+                        height: 28.0,
                       ),
                       Text(
                         "aFynder",
                         style: TextStyle(
-                            color: Colors.white,
+                            color: ThemeColors.themeColor5,
                             fontSize: 28.0,
                             fontFamily: 'pacifico'),
+                      ),
+                      SizedBox(
+                        height: 16.0,
                       ),
                       Text(
                         'Lorem ipsum dolor sit ',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.0,
+                            color: ThemeColors.themeColor5,
+                            fontSize: 20.0,
                             fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'amet, consectetur',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.0,
+                            color: ThemeColors.themeColor5,
+                            fontSize: 20.0,
                             fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  height: 4.0,
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: LinearProgressIndicator(
+                          value: _sliderCurrentIndex == 0
+                              ? controller.value
+                              : _sliderCurrentIndex > 0 ? 1.0 : 0,
+                          backgroundColor: Colors.grey,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Expanded(
+                        child: LinearProgressIndicator(
+                          value: _sliderCurrentIndex == 1
+                              ? controller.value
+                              : _sliderCurrentIndex > 1 ? 1.0 : 0,
+                          backgroundColor: Colors.grey,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Expanded(
+                        child: LinearProgressIndicator(
+                          value: _sliderCurrentIndex == 2
+                              ? controller.value
+                              : _sliderCurrentIndex == 2 ? 1.0 : 0,
+                          backgroundColor: Colors.grey,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                       ),
                     ],
                   ),
@@ -59,62 +169,105 @@ class _LandingScreenState extends State<LandingScreen> {
               )
             ]),
           ),
-          SocialMediaButton(
-            text: "Sign-in with Google",
-            prefixIcon: Icon(Icons.mail),
-            buttonColor: Colors.blue,
+          SizedBox(
+            height: 24.0,
           ),
-          SocialMediaButton(
-            text: "Sign-in with Facebook",
-            prefixIcon: Icon(Icons.face),
-            buttonColor: Colors.blueAccent,
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 0, horizontal: 8.0),
-                    child: Container(
-                      height: 1.0,
-                      color: Colors.grey,
+          Expanded(
+            flex: 4,
+            child: Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6.0, horizontal: 20.0),
+                        child: SocialMediaButton(
+                          text: "Sign-in with Google",
+                          prefixIcon: Icon(
+                            FontAwesome.google,
+                            color: Colors.white,
+                          ),
+                          buttonColor: Colors.blueAccent,
+                          onTap: () {},
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6.0, horizontal: 20.0),
+                        child: SocialMediaButton(
+                          text: "Sign-in with Facebook",
+                          prefixIcon: Icon(
+                            FontAwesome.facebook,
+                            color: Colors.white,
+                          ),
+                          buttonColor: Colors.blue[800],
+                          onTap: () {},
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 0.0, horizontal: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(0.0, 6.0, 6.0, 6.0),
+                            child: Container(
+                              height: 1.0,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          "OR USING EMAIL",
+                          style: TextStyle(color: Colors.grey, fontSize: 14.0),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(6.0, 6.0, 0.0, 6.0),
+                            child: Container(
+                              height: 1.0,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                Text(
-                  "OR USING EMAIL",
-                  style: TextStyle(color: Colors.grey, fontSize: 16.0),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8.0),
-                    child: Container(
-                      height: 1.0,
-                      color: Colors.grey,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 18.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        EmailSignButton(
+                          text: "Sign in",
+                          onpressed: () {
+                            Navigator.pushNamed(context, '/signin');
+                          },
+                        ),
+                        SizedBox(
+                          width: 16.0,
+                        ),
+                        EmailSignButton(
+                          text: "Sign up",
+                          onpressed: () {
+                            Navigator.pushNamed(context, '/signup');
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                EmailSignButton(
-                  text: "Sign in",
-                ),
-                SizedBox(
-                  width: 16.0,
-                ),
-                EmailSignButton(
-                  text: "Sign up",
-                ),
-              ],
+                  SizedBox(
+                    height: 4.0,
+                  )
+                ],
+              ),
             ),
           )
         ],
@@ -127,8 +280,10 @@ class SocialMediaButton extends StatelessWidget {
   final String text;
   final Icon prefixIcon;
   final Color buttonColor;
+  final Function onTap;
 
-  const SocialMediaButton({this.text, this.prefixIcon, this.buttonColor});
+  const SocialMediaButton(
+      {this.text, this.prefixIcon, this.buttonColor, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -137,8 +292,8 @@ class SocialMediaButton extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(0),
         child: RaisedButton(
-          onPressed: () {},
-          padding: EdgeInsets.all(8.0),
+          onPressed: onTap,
+          padding: EdgeInsets.all(13.0),
           color: buttonColor,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -150,7 +305,7 @@ class SocialMediaButton extends StatelessWidget {
               Text(
                 text,
                 style:
-                    TextStyle(color: ThemeColors.themeColor4, fontSize: 18.0),
+                    TextStyle(color: ThemeColors.themeColor4, fontSize: 20.0),
               ),
             ],
           ),
@@ -163,22 +318,23 @@ class SocialMediaButton extends StatelessWidget {
 
 class EmailSignButton extends StatelessWidget {
   final String text;
+  final Function onpressed;
 
-  const EmailSignButton({this.text});
+  const EmailSignButton({this.text, this.onpressed});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: RaisedButton(
-        onPressed: () {},
+        onPressed: onpressed,
         child: Center(
             child: Text(
           text,
-          style: TextStyle(fontSize: 16.0),
+          style: TextStyle(fontSize: 20.0),
         )),
         textColor: Colors.white,
-        color: ThemeColors.themeColor1,
-        padding: EdgeInsets.all(14.0),
+        color: ThemeColors.themeOrange,
+        padding: EdgeInsets.all(12.0),
       ),
     );
   }

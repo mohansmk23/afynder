@@ -21,6 +21,14 @@ environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
+  flutter_icons: ^1.1.0
+  google_maps_flutter:  ^0.5.27+3
+  smooth_page_indicator: ^0.2.0
+  flutter_rating_bar: ^3.0.1+1
+  flutter_speed_dial: ^1.2.5
+  transparent_image: ^1.0.0
+  after_layout: ^1.0.7+2
+
   flutter:
     sdk: flutter
 
@@ -38,7 +46,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
-
+  assets:
+    - assets/
 
   uses-material-design: true
   fonts:
