@@ -27,7 +27,7 @@ class _CategoriesState extends State<Categories> {
         body: SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-        child: Column(children: <Widget>[
+        child: ListView(children: <Widget>[
           Align(
             alignment: Alignment.topLeft,
             child: InkWell(
@@ -53,13 +53,18 @@ class _CategoriesState extends State<Categories> {
           SizedBox(
             height: 24.0,
           ),
-          GridView.count(
+          GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 5.0,
+              mainAxisSpacing: 5.0,
+            ),
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             scrollDirection: Axis.vertical,
-            crossAxisCount: 2,
-            children: List.generate(6, (index) {
-              return CategoryWidget(
+            // crossAxisCount: 2,
+            itemCount: 6,
+            itemBuilder: (context, index) =>CategoryWidget(
                 imgUrl: categoriesList[index].imgUrl,
                 isSelected: categoriesList[index].isSelected,
                 catName: categoriesList[index].catName,
@@ -74,12 +79,11 @@ class _CategoriesState extends State<Categories> {
                       selectedCount--;
                   });
                 },
-              );
-            }),
+              )
           ),
-          SizedBox(
+          /*SizedBox(
             height: 16.0,
-          ),
+          ),*/
           RaisedButton(
             onPressed: () {
               Navigator.pushNamed(context, '/dashboard');
