@@ -2,6 +2,7 @@ import 'package:afynder/constants/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LandingScreen extends StatefulWidget {
   @override
@@ -10,6 +11,8 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
+  GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+
   List<Widget> sliderImages = [
     Image.asset(
       'assets/intro1.jpg',
@@ -190,7 +193,9 @@ class _LandingScreenState extends State<LandingScreen>
                             color: Colors.white,
                           ),
                           buttonColor: Colors.blueAccent,
-                          onTap: () {},
+                          onTap: () {
+                            _googleSignIn.signIn();
+                          },
                         ),
                       ),
                       Padding(

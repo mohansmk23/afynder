@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "204669281963",
+    "firebase_url": "https://afynder-c797a.firebaseio.com",
+    "project_id": "afynder-c797a",
+    "storage_bucket": "afynder-c797a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204669281963:android:bc7af9ee287797bf8ab9ee",
+        "android_client_info": {
+          "package_name": "com.istrides.afynder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "204669281963-7dl8s1el5t1m16ngvbu9h2af7v35mg5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCi7RkCyHBzDRNAcz2mFUpn7SuJHY-LcFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "204669281963-7dl8s1el5t1m16ngvbu9h2af7v35mg5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

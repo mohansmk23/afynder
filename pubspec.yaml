@@ -28,6 +28,9 @@ dependencies:
   flutter_speed_dial: ^1.2.5
   transparent_image: ^1.0.0
   after_layout: ^1.0.7+2
+  google_sign_in: ^4.5.3
+  firebase_core: ^0.5.0
+  firebase_auth: ^0.18.0+1
 
   flutter:
     sdk: flutter
@@ -54,6 +57,11 @@ flutter:
     - family: pacifico
       fonts:
         - asset: fonts/pacifico-Regular.ttf
+
+
+    - family: kalam
+      fonts:
+        - asset: fonts/Kalam-Regular.ttf
 
 
   # For details regarding fonts from package dependencies,

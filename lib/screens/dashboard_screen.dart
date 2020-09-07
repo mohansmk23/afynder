@@ -44,7 +44,7 @@ class _DashboardState extends State<Dashboard> {
             child: Icon(FontAwesome.user_circle)),
         title: Text(
           "aFynder",
-          style: TextStyle(fontFamily: 'pacifico'),
+          style: TextStyle(fontFamily: 'kalam'),
         ),
         elevation: 0,
         actions: <Widget>[Icon(Icons.search)],
