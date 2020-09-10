@@ -29,10 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return MaterialApp(initialRoute: '/', routes: {
       '/': (context) => LandingScreen(),
       '/signin': (context) => SigninScreen(),
-      '/categories': (context) => Categories(),
+      Categories.routeName: (context) => Categories(),
       '/signup': (context) => SignUpScreen(),
       '/profile': (context) => ProfileScreen(),
-      '/dashboard': (context) => Dashboard(),
+      Dashboard.routeName: (context) => Dashboard(),
       '/productdetails': (context) => ProductDetails(),
       '/merchantdetails': (context) => MerchantProfile(),
       '/offermap': (context) => FilterScreen(),

@@ -1,9 +1,17 @@
+import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/strings.dart';
 import 'package:afynder/main.dart';
+import 'package:afynder/screens/categories_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:afynder/screens/signin_screen.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'landing_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -13,11 +21,59 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool _terms = false, isLoading = false;
+  String fName, lName, email, mobile, password;
+  Response response;
+
+  void signUp() async {
+    setState(() {
+      isLoading = true;
+    });
+    Map<String, String> params = {
+      "apiMethod": "addNewShoppe",
+      "firstName": fName,
+      "lastName": lName,
+      "phoneNumber": mobile,
+      "emailId": email,
+      "password": password,
+      "mobileUniqueCode": "jana1221"
+    };
+
+    try {
+      print(json.encode(params));
+      response = await dio.post(signUpRequest, data: params);
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString(firstNameKey, fName);
+        prefs.setString(lastNameKey, lName);
+        prefs.setString(mailIdKey, email);
+        prefs.setString(authorizationKey, parsed['authKey']);
+        Navigator.pushNamed(context, Categories.routeName);
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        key: _scaffoldKey,
         body: Builder(
             builder: (context) => SafeArea(
                   child: Padding(
@@ -130,9 +186,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       Expanded(
                                         child: LabelFormField(
                                           label: 'First Name',
+                                          keyboardType: TextInputType.text,
                                           validator: (value) {
                                             if (value.isEmpty) {
                                               return 'Please enter first name';
+                                            } else {
+                                              fName = value;
                                             }
                                             return null;
                                           },
@@ -144,9 +203,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       Expanded(
                                         child: LabelFormField(
                                           label: 'Last Name',
+                                          keyboardType: TextInputType.text,
                                           validator: (value) {
                                             if (value.isEmpty) {
                                               return 'Please enter last name';
+                                            } else {
+                                              lName = value;
                                             }
                                             return null;
                                           },
@@ -159,11 +221,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                   LabelFormField(
                                     label: 'Email',
+                                    keyboardType: TextInputType.emailAddress,
                                     validator: (value) {
                                       if (!RegExp(
                                               r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
                                           .hasMatch(value)) {
                                         return 'Please enter valid email';
+                                      } else {
+                                        email = value;
                                       }
                                       return null;
                                     },
@@ -173,9 +238,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                   LabelFormField(
                                     label: 'Mobile',
+                                    keyboardType: TextInputType.phone,
                                     validator: (value) {
                                       if (value.length != 10) {
                                         return 'Please enter valid mobile number';
+                                      } else {
+                                        mobile = value;
                                       }
                                       return null;
                                     },
@@ -185,9 +253,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                   LabelFormField(
                                     label: 'Password',
+                                    keyboardType: TextInputType.visiblePassword,
                                     validator: (value) {
                                       if (value.isEmpty) {
                                         return 'Please enter valid password';
+                                      } else {
+                                        password = value;
                                       }
                                       return null;
                                     },
@@ -254,9 +325,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         if (_formKey.currentState.validate()) {
                                           if (_terms) {
                                             setState(() {
-                                              isLoading = !isLoading;
-                                              Navigator.pushNamed(
-                                                  context, '/categories');
+                                              signUp();
                                             });
                                           } else {
                                             Scaffold.of(context).showSnackBar(
@@ -301,8 +370,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 class LabelFormField extends StatelessWidget {
   final String label;
   final Function validator;
+  final TextInputType keyboardType;
 
-  const LabelFormField({this.label, this.validator});
+  const LabelFormField({this.label, this.validator, this.keyboardType});
 
   @override
   Widget build(BuildContext context) {
@@ -320,6 +390,9 @@ class LabelFormField extends StatelessWidget {
         TextFormField(
           validator: validator,
           textAlign: TextAlign.start,
+          keyboardType: keyboardType,
+          textInputAction: TextInputAction.next,
+          onEditingComplete: () => FocusScope.of(context).nextFocus(),
           decoration: new InputDecoration(
               contentPadding:
                   EdgeInsets.symmetric(horizontal: 4.0, vertical: 0),

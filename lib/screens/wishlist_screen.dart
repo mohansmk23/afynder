@@ -32,8 +32,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cat1.jpg",
-                        merchantName: 'Exclusive sofaset',
-                        productname: "Furnitures",
+                        categoryName: 'Exclusive sofaset',
+                        productName: "Furnitures",
                         price: "Rs. 25000"),
                   ),
                   Dismissible(
@@ -41,8 +41,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cho1.jpeg",
-                        merchantName: 'JBL Speakers',
-                        productname: "Electronics",
+                        categoryName: 'JBL Speakers',
+                        productName: "Electronics",
                         price: "Rs. 25000"),
                   ),
                   Dismissible(
@@ -50,8 +50,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cho5.jpg",
-                        merchantName: 'Kitchen Decoratives',
-                        productname: "Interiors",
+                        categoryName: 'Kitchen Decoratives',
+                        productName: "Interiors",
                         price: "Rs. 40000"),
                   ),
                   Dismissible(
@@ -59,8 +59,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cho2.jpeg",
-                        merchantName: 'Beats Earphones',
-                        productname: "Earphones",
+                        categoryName: 'Beats Earphones',
+                        productName: "Earphones",
                         price: "Rs. 25000"),
                   ),
                   Dismissible(
@@ -68,8 +68,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cho3.jpeg",
-                        merchantName: 'Aviator Shades',
-                        productname: "shades",
+                        categoryName: 'Aviator Shades',
+                        productName: "shades",
                         price: "Rs. 8000"),
                   ),
                   Dismissible(
@@ -77,8 +77,8 @@ class _WishListState extends State<WishList> {
                     background: Container(color: Colors.red),
                     child: ChoiceItem(
                         imagePath: "assets/cho4.jpg",
-                        merchantName: 'Electronic Appliances',
-                        productname: "Electronics",
+                        categoryName: 'Electronic Appliances',
+                        productName: "Electronics",
                         price: "Rs. 5000"),
                   )
                 ],

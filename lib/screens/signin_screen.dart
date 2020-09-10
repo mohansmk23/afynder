@@ -1,6 +1,16 @@
+import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/login_model.dart';
+import 'package:afynder/screens/categories_screen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:afynder/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/colors.dart';
+import 'dashboard_screen.dart';
 
 class SigninScreen extends StatefulWidget {
   @override
@@ -9,11 +19,58 @@ class SigninScreen extends StatefulWidget {
 
 class _SigninScreenState extends State<SigninScreen> {
   final _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = false;
+  String email, password;
+  Response response;
+
+  void signIn() async {
+    setState(() {
+      isLoading = true;
+    });
+    Map<String, String> params = {
+      "apiMethod": "shopeeLogin",
+      "username": email,
+      "password": password,
+      "mobileUniqueCode": "jana1221"
+    };
+
+    try {
+      print(json.encode(params));
+      response = await dio.post(signInRequest, data: params);
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        final LoginModel model = LoginModel.fromJson(parsed);
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString(firstNameKey, model.shoppeInformations.firstName);
+        prefs.setString(lastNameKey, model.shoppeInformations.lastName);
+        prefs.setString(mailIdKey, model.shoppeInformations.mailId);
+        prefs.setString(authorizationKey, model.shoppeInformations.authKey);
+        Navigator.pushNamed(context, Dashboard.routeName);
+        //  Navigator.pop(context);
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -58,10 +115,10 @@ class _SigninScreenState extends State<SigninScreen> {
                         RectFormField(
                           hint: 'Email',
                           validator: (value) {
-                            if (!RegExp(
-                                    r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
-                                .hasMatch(value)) {
+                            if (value.isEmpty) {
                               return 'Please enter valid email';
+                            } else {
+                              email = value;
                             }
                             return null;
                           },
@@ -74,6 +131,8 @@ class _SigninScreenState extends State<SigninScreen> {
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Please enter valid password';
+                            } else {
+                              password = value;
                             }
                             return null;
                           },
@@ -118,10 +177,7 @@ class _SigninScreenState extends State<SigninScreen> {
                             color: ThemeColors.themeOrange,
                             onPressed: () {
                               if (_formKey.currentState.validate()) {
-                                setState(() {
-                                  isLoading = !isLoading;
-                                  Navigator.pushNamed(context, '/categories');
-                                });
+                                signIn();
                               } else {}
                             },
                           ),
@@ -173,6 +229,8 @@ class RectFormField extends StatelessWidget {
     return TextFormField(
       validator: validator,
       textAlign: TextAlign.start,
+      textInputAction: TextInputAction.next,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
       decoration: new InputDecoration(
           contentPadding: EdgeInsets.all(16.0),
           hintText: hint,

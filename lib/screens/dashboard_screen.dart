@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
 class Dashboard extends StatefulWidget {
+  static const routeName = "/dashboard";
+
   @override
   _DashboardState createState() => _DashboardState();
 }

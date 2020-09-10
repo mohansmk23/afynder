@@ -545,18 +545,18 @@ class _ProductDetailsState extends State<ProductDetails> {
                             Expanded(
                               child: NearbyItem(
                                 imagePath: "assets/cat1.jpg",
-                                productname: "Exclusi...",
+                                productName: "Exclusi...",
                                 price: "Rs. 25000",
                                 category: "Furnitures",
-                                visible: true,
+                                isOffer: true,
                               ),
                             ),
                             Expanded(
                               child: NearbyItem(
                                 imagePath: "assets/cho1.jpeg",
-                                productname: "JBL Speakers",
+                                productName: "JBL Speakers",
                                 price: "Rs. 15000",
-                                visible: true,
+                                isOffer: true,
                                 category: "Speakers",
                               ),
                             ),
@@ -567,19 +567,19 @@ class _ProductDetailsState extends State<ProductDetails> {
                             Expanded(
                               child: NearbyItem(
                                 imagePath: "assets/nea1.jpeg",
-                                productname: "Earings",
+                                productName: "Earings",
                                 price: "Rs. 25000",
                                 category: "Jewels",
-                                visible: false,
+                                isOffer: false,
                               ),
                             ),
                             Expanded(
                               child: NearbyItem(
                                 imagePath: "assets/nea2.jpg",
-                                productname: "Rings",
+                                productName: "Rings",
                                 price: "Rs. 15000",
                                 category: "Jewels",
-                                visible: true,
+                                isOffer: true,
                               ),
                             ),
                           ],
