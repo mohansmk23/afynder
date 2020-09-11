@@ -1,18 +1,25 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/map_model.dart';
 import 'package:afynder/screens/map_marker.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Markergenerator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OfferMap extends StatefulWidget {
   @override
@@ -21,48 +28,78 @@ class OfferMap extends StatefulWidget {
 
 class _OfferMapState extends State<OfferMap> {
   String _mapStyle;
-
   Completer<GoogleMapController> _controller = Completer();
   List<Marker> customMarkers = new List();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  bool isLoading = true;
+  Response response;
 
-  List<LatLng> locations = [
-    LatLng(13.0540, 80.2641),
-    LatLng(13.0585, 80.2642),
-    LatLng(13.0585, 80.2682),
-    LatLng(13.0486, 80.2430),
-    LatLng(13.0488, 80.2474),
-    LatLng(13.0483, 80.2412),
-    LatLng(13.0476, 80.2443),
-  ];
+  List<MerchantList> merchantList = [];
+  List<LatLng> locations = [];
+  List<Widget> mapMarkers = [];
 
-  List<Widget> mapMarkers = [
-    MapMarker("20% OFF"),
-    MapMarker("10% OFF"),
-    MapMarker("50% OFF"),
-    MapMarker("70% OFF"),
-    MapMarker("60% OFF"),
-    MapMarker("10% OFF"),
-    MapMarker("30% OFF"),
-  ];
+  void getMerchantsList() async {
+    setState(() {
+      isLoading = true;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    try {
+      response = await dio.post(merchantLocationList, data: {
+        "apiMethod": "merchantsList",
+        "mobileUniqueCode": mobileUniqueCode
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        final MapModel model = MapModel.fromJson(parsed);
+        merchantList = model.merchantList.toList();
+
+        for (MerchantList merchant in merchantList) {
+          if (merchant.lng.isNotEmpty && merchant.lat.isNotEmpty) {
+            locations.add(
+                LatLng(double.parse(merchant.lat), double.parse(merchant.lng)));
+            mapMarkers.add(MapMarker(merchant.offerAmt));
+
+            print(merchant.offerAmt);
+          }
+        }
+        MarkerGenerator(mapMarkers, (bitmaps) {
+          customMarkers = mapBitmapsToMarkers(bitmaps);
+
+          print(customMarkers.length);
+
+          setState(() {});
+        }).generate(context);
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(message)));
+  }
 
   static const LatLng _center = const LatLng(13.0540, 80.2641);
 
   @override
   void initState() {
     super.initState();
-
     rootBundle.loadString('assets/map_style.txt').then((string) {
       _mapStyle = string;
     });
 
-    super.initState();
-    MarkerGenerator(mapMarkers, (bitmaps) {
-      customMarkers = mapBitmapsToMarkers(bitmaps);
-
-      print(customMarkers.length);
-
-      setState(() {});
-    }).generate(context);
+    getMerchantsList();
   }
 
   List<Marker> mapBitmapsToMarkers(List<Uint8List> bitmaps) {
@@ -74,7 +111,24 @@ class _OfferMapState extends State<OfferMap> {
           icon: BitmapDescriptor.fromBytes(bmp),
           onTap: () {
             showModalBottomSheet(
-                context: context, builder: (context) => bottomSheet(context));
+                context: context,
+                builder: (context) {
+                  MerchantList merchant = merchantList[i];
+                  return bottomSheet(
+                      context,
+                      merchant.firstName,
+                      merchant.shopCategoryName,
+                      "754",
+                      2.5,
+                      merchant.offerAmt,
+                      "all products offer lorem ",
+                      "23 september 2020",
+                      merchant.shopAddress,
+                      double.parse(merchant.lat),
+                      double.parse(merchant.lng),
+                      merchant.shopContactNumber,
+                      merchant.isOffer == "yes");
+                });
           }));
     });
     return markersList;
@@ -87,22 +141,38 @@ class _OfferMapState extends State<OfferMap> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        GoogleMap(
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: CameraPosition(
-            target: _center,
-            zoom: 16.0,
+    return Scaffold(
+      key: _scaffoldKey,
+      body: Stack(
+        children: <Widget>[
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: _center,
+              zoom: 16.0,
+            ),
+            markers: customMarkers.toSet(),
           ),
-          markers: customMarkers.toSet(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-Widget bottomSheet(BuildContext context) {
+Widget bottomSheet(
+    BuildContext context,
+    String merchantName,
+    String merchantCategory,
+    String ratingCount,
+    double rating,
+    String offerAmount,
+    String offerDescription,
+    String offerUntil,
+    String address,
+    double lat,
+    double lng,
+    String phone,
+    bool isOFfer) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8.0),
     child: Container(
@@ -138,7 +208,7 @@ Widget bottomSheet(BuildContext context) {
                         Navigator.pushNamed(context, '/merchantdetails');
                       },
                       child: Text(
-                        "Manoj Furnitures",
+                        merchantName,
                         style: TextStyle(
                             color: ThemeColors.themeColor5,
                             fontSize: 24.0,
@@ -166,7 +236,7 @@ Widget bottomSheet(BuildContext context) {
                   height: 4.0,
                 ),
                 Text(
-                  "Furnitures",
+                  merchantCategory,
                   style: TextStyle(
                     color: ThemeColors.themeColor5,
                     fontSize: 14.0,
@@ -179,7 +249,7 @@ Widget bottomSheet(BuildContext context) {
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     RatingBarIndicator(
-                      rating: 3.35,
+                      rating: rating,
                       itemBuilder: (context, index) => Icon(
                         Icons.star,
                         color: Colors.amber,
@@ -189,7 +259,7 @@ Widget bottomSheet(BuildContext context) {
                       direction: Axis.horizontal,
                     ),
                     Text(
-                      "587 Ratings",
+                      "$ratingCount Ratings",
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16.0,
@@ -210,30 +280,36 @@ Widget bottomSheet(BuildContext context) {
             Row(
               children: <Widget>[
                 Text(
-                  "20% OFF",
-                  style: TextStyle(color: Colors.green, fontSize: 16.0),
+                  isOFfer ? "$offerAmount% OFF" : "No Offers Now",
+                  style: TextStyle(
+                      color: isOFfer ? Colors.green : Colors.redAccent,
+                      fontSize: 16.0),
                 ),
                 Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      "Until",
-                      style: TextStyle(color: Colors.grey, fontSize: 12.0),
-                    ),
-                    Text(
-                      "7 September 2020",
-                      style: TextStyle(color: Colors.black, fontSize: 16.0),
-                    ),
-                  ],
-                )
+                isOFfer
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: <Widget>[
+                          Text(
+                            "Until",
+                            style:
+                                TextStyle(color: Colors.grey, fontSize: 12.0),
+                          ),
+                          Text(
+                            offerUntil,
+                            style:
+                                TextStyle(color: Colors.black, fontSize: 16.0),
+                          ),
+                        ],
+                      )
+                    : SizedBox()
               ],
             ),
             SizedBox(
               height: 8.0,
             ),
             Text(
-              "20% off on purchases over 2000 Rs.",
+              isOFfer ? offerDescription : "Keep on track to grab offer",
               style: TextStyle(
                 color: ThemeColors.themeColor5,
                 fontSize: 14.0,
@@ -244,7 +320,7 @@ Widget bottomSheet(BuildContext context) {
               thickness: 1.0,
             ),
             Text(
-              "No.4 Third floor,peters rd, Royapettah , Chennai - 600057",
+              address,
               style: TextStyle(
                 color: ThemeColors.themeColor5,
                 fontSize: 18.0,
@@ -257,16 +333,27 @@ Widget bottomSheet(BuildContext context) {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                CircleAvatar(
-                  radius: 24.0,
-                  child: Icon(Icons.directions),
+                InkWell(
+                  onTap: () {
+                    launch(
+                        "https://www.google.com/maps/dir/?api=1&destination=$lng,$lng&travelmode=driving");
+                  },
+                  child: CircleAvatar(
+                    radius: 24.0,
+                    child: Icon(Icons.directions),
+                  ),
                 ),
                 SizedBox(
                   width: 24.0,
                 ),
-                CircleAvatar(
-                  radius: 24.0,
-                  child: Icon(Icons.call),
+                InkWell(
+                  onTap: () {
+                    launch("tel://$phone");
+                  },
+                  child: CircleAvatar(
+                    radius: 24.0,
+                    child: Icon(Icons.call),
+                  ),
                 )
               ],
             )

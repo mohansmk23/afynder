@@ -20,7 +20,6 @@ class _MapMarkerState extends State<MapMarker> {
         children: <Widget>[
           Container(
             height: 40.0,
-            width: 90.0,
             decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(
@@ -33,10 +32,12 @@ class _MapMarkerState extends State<MapMarker> {
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  widget.offerText,
+                  widget.offerText.isNotEmpty
+                      ? '${widget.offerText} % OFF'
+                      : 'No Offers',
                   style: TextStyle(
                       color: Colors.green,
-                      fontSize: 18.0,
+                      fontSize: 14.0,
                       fontWeight: FontWeight.bold),
                 ),
               ),

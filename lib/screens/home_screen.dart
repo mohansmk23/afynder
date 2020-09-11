@@ -5,6 +5,7 @@ import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/homesccreen_model.dart';
+import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -145,11 +146,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount:
                             featuredList.isEmpty ? 0 : featuredList.length - 1,
                         itemBuilder: (BuildContext ctxt, int index) {
-                          return new FeaturedItem(
+                          return FeaturedItem(
                             imagePath: featuredList[index].productImages[0],
                             name: featuredList[index].productName,
                             visible: featuredList[index].isOffer == "yes",
                             offerPercent: featuredList[index].offerAmount,
+                            productId: featuredList[index].productId,
                           );
                         }),
                   ),
@@ -318,11 +320,15 @@ class ChoiceItem extends StatelessWidget {
 }
 
 class FeaturedItem extends StatelessWidget {
-  final String imagePath, name, offerPercent;
+  final String imagePath, name, offerPercent, productId;
   final bool visible;
 
   const FeaturedItem(
-      {this.imagePath, this.name, this.visible, this.offerPercent});
+      {this.imagePath,
+      this.name,
+      this.visible,
+      this.offerPercent,
+      this.productId});
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +337,14 @@ class FeaturedItem extends StatelessWidget {
       width: 150.0,
       child: InkWell(
         onTap: () {
-          Navigator.pushNamed(context, '/productdetails');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetails(
+                productId: productId,
+              ),
+            ),
+          );
         },
         child: Card(
           child: ClipRRect(
