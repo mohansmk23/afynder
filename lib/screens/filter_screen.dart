@@ -1,5 +1,13 @@
+import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/category_model.dart';
+import 'package:afynder/response_models/filter_selection.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterScreen extends StatefulWidget {
   static const routeName = "/filters";
@@ -24,10 +32,11 @@ class _FilterScreenState extends State<FilterScreen> {
   var isCategoryChanged = false;
   var themeData;
   var dateRangeValue = "";
-  var minPrice = 0.0;
-  var maxPrice = 1000.0;
+  var minPrice = 10.0;
+  var maxPrice = 10000.0;
   DateTime fromDate;
   DateTime toDate;
+  bool isLoading;
 
   GlobalKey<ScaffoldState> scaffoldState = GlobalKey();
 
@@ -44,43 +53,45 @@ class _FilterScreenState extends State<FilterScreen> {
   List<String> sortingValues = [
     "Price High to low",
     "Price low to high",
-    "Nearby first",
-    "Farther first",
   ];
 
-  List<String> categoryValues = [
-    "All",
-    "Furnitures",
-    "Electronics",
-    "Electricals",
-    "Kitchen",
-    "Decoratives",
-    "Tools",
-    "Interiors"
-  ];
+  List<CategoryList> categoryList = [];
 
-  Widget locationWidget(String location) {
-    return FilterChip(
-      labelStyle: TextStyle(
-          color: locationSelectedPosition == locationValues.indexOf(location)
-              ? ThemeColors.themeOrange
-              : Colors.black87),
-      label: Text(location),
-      selected: locationSelectedPosition == locationValues.indexOf(location),
-      onSelected: (value) {
-        setState(() {
-          if (value) {
-            isLocationChanged = true;
-            locationSelectedPosition = locationValues.indexOf(location);
-          }
-        });
-      },
-    );
+  List<int> selectedCatIndexes = [];
+
+  void getCategories() async {
+    setState(() {
+      isLoading = false;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    try {
+      var response = await dio.post(fetchCategories, data: {
+        "apiMethod": "CategoryList",
+        "mobileUniqueCode": mobileUniqueCode
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        final CategoryModel model = CategoryModel.fromJson(parsed);
+        categoryList = model.categoryList.toList();
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   List<Widget> getCategoriesList() {
     List<Widget> list = new List<Widget>();
-    for (var i = 0; i < categoryValues.length; i++) {
+    for (var i = 0; i < categoryList.length; i++) {
       list.add(categoryWidget(i));
     }
     return list;
@@ -94,19 +105,20 @@ class _FilterScreenState extends State<FilterScreen> {
     return list;
   }
 
-  Widget categoryWidget(int ageIndex) {
+  Widget categoryWidget(int catIndex) {
     return FilterChip(
       labelStyle: TextStyle(
-          color: categorySelectedPosition == ageIndex
+          color: selectedCatIndexes.contains(catIndex)
               ? ThemeColors.themeOrange
               : Colors.black87),
-      label: Text(categoryValues[ageIndex]),
-      selected: categorySelectedPosition == ageIndex,
+      label: Text(categoryList[catIndex].categoryName),
+      selected: selectedCatIndexes.contains(catIndex),
       onSelected: (value) {
         setState(() {
           if (value) {
-            isAgeChanged = true;
-            categorySelectedPosition = ageIndex;
+            selectedCatIndexes.add(catIndex);
+          } else {
+            selectedCatIndexes.removeAt(selectedCatIndexes.indexOf(catIndex));
           }
         });
       },
@@ -126,6 +138,8 @@ class _FilterScreenState extends State<FilterScreen> {
           if (value) {
             isCategoryChanged = true;
             sortSelectedPosition = ageIndex;
+          } else {
+            sortSelectedPosition = null;
           }
         });
       },
@@ -140,10 +154,11 @@ class _FilterScreenState extends State<FilterScreen> {
     endLabel = "Rs ${maxPrice.round()}";
     locationSelectedPosition = 0;
     categorySelectedPosition = 0;
+    getCategories();
     super.initState();
   }
 
-  void showSnackBar(String content) {
+  void _showSnackBar(String content) {
     scaffoldState.currentState.showSnackBar(SnackBar(
       content: Text(content),
       duration: Duration(milliseconds: 1500),
@@ -261,25 +276,7 @@ class _FilterScreenState extends State<FilterScreen> {
                 children: getSortingList(),
               ),
               SizedBox(
-                height: 5,
-              ),
-              Divider(),
-              SizedBox(
-                height: 5,
-              ),
-              Text("Location"),
-              SizedBox(
-                height: 5,
-              ),
-              Wrap(runSpacing: 6.0, spacing: 6.0, children: <Widget>[
-                for (String location in locationValues) locationWidget(location)
-              ]),
-              SizedBox(
-                height: 5,
-              ),
-              Divider(),
-              SizedBox(
-                height: 5,
+                height: 10,
               ),
               Divider(),
               SizedBox(
@@ -298,7 +295,28 @@ class _FilterScreenState extends State<FilterScreen> {
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
+                        FilterSelection filterSelection = new FilterSelection();
+
+                        filterSelection.apiMethod = "productList";
+                        filterSelection.productId = "";
+                        filterSelection.searchString = "";
+                        filterSelection.priceFrom =
+                            values.start.round().toString();
+                        filterSelection.priceTo = values.end.round().toString();
+
+                        filterSelection.sorting = sortSelectedPosition == 1
+                            ? "priceAsc"
+                            : sortSelectedPosition == 0 ? "priceDesc" : "";
+                        filterSelection.categories = [];
+
+                        for (int selectedIndex in selectedCatIndexes) {
+                          filterSelection.categories.add(Categories(
+                              categoryId:
+                                  categoryList[selectedIndex].categoryId));
+                        }
+                        print(jsonEncode(filterSelection.toJson()));
+
+                        // Navigator.pop(context);
                       },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),

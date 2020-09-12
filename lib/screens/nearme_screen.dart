@@ -6,6 +6,7 @@ import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/all_products_model.dart';
 import 'package:afynder/screens/filter_screen.dart';
+import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -159,6 +160,7 @@ class _NearMeState extends State<NearMe> {
                             price: productList[index].sellingAmount,
                             offerPercent: productList[index].offerAmount,
                             category: productList[index].shopCategoryName,
+                            productId: productList[index].productId,
                           )),
                 ],
               ),
@@ -173,7 +175,8 @@ class NearbyItem extends StatelessWidget {
       price,
       category,
       actualPrice,
-      offerPercent;
+      offerPercent,
+      productId;
   final bool isOffer, isFeatured;
 
   const NearbyItem(
@@ -184,139 +187,152 @@ class NearbyItem extends StatelessWidget {
       this.category,
       this.actualPrice,
       this.isFeatured,
-      this.offerPercent});
+      this.offerPercent,
+      this.productId});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      child: Card(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 0.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Stack(
-                  children: <Widget>[
-                    FadeInImage.memoryNetwork(
-                      image: imagePath,
-                      placeholder: kTransparentImage,
-                      width: double.infinity,
-                      height: 150,
-                      fit: BoxFit.fill,
-                    ),
-                    Visibility(
-                      visible: isFeatured,
-                      child: Positioned(
-                        top: 2.0,
-                        right: 2.0,
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 2.0, horizontal: 6.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.star,
-                                  color: ThemeColors.themeOrange,
-                                  size: 15.0,
-                                ),
-                                SizedBox(
-                                  width: 2.0,
-                                ),
-                                Text(
-                                  "Featured",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                ),
-                              ],
-                            ),
-                          ),
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: isOffer,
-                      child: Positioned(
-                        bottom: 4.0,
-                        right: 4.0,
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Text(
-                              "$offerPercent% OFF",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white),
-                            ),
-                          ),
-                          color: ThemeColors.themeOrange,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
-                  child: Row(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetails(
+                productId: productId,
+              ),
+            ),
+          );
+        },
+        child: Card(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Stack(
                     children: <Widget>[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            category,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 10.0,
-                            ),
-                          ),
-                          Text(
-                            productName,
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                        ],
+                      FadeInImage.memoryNetwork(
+                        image: imagePath,
+                        placeholder: kTransparentImage,
+                        width: double.infinity,
+                        height: 150,
+                        fit: BoxFit.fill,
                       ),
-                      Spacer(),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: <Widget>[
-                          isOffer
-                              ? Text(
-                                  "Rs.$actualPrice",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 10.0,
-                                    decoration: TextDecoration.lineThrough,
+                      Visibility(
+                        visible: isFeatured,
+                        child: Positioned(
+                          top: 2.0,
+                          right: 2.0,
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 2.0, horizontal: 6.0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.star,
+                                    color: ThemeColors.themeOrange,
+                                    size: 15.0,
                                   ),
-                                )
-                              : SizedBox(),
-                          Text(
-                            "Rs.$price",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12.0,
+                                  SizedBox(
+                                    width: 2.0,
+                                  ),
+                                  Text(
+                                    "Featured",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
+                                  ),
+                                ],
+                              ),
                             ),
+                            color: Colors.white,
                           ),
-                        ],
+                        ),
                       ),
+                      Visibility(
+                        visible: isOffer,
+                        child: Positioned(
+                          bottom: 4.0,
+                          right: 4.0,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                "$offerPercent% OFF",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                            ),
+                            color: ThemeColors.themeOrange,
+                          ),
+                        ),
+                      )
                     ],
                   ),
-                ),
-                SizedBox(
-                  width: 8.0,
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+                    child: Row(
+                      children: <Widget>[
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              category,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 10.0,
+                              ),
+                            ),
+                            Text(
+                              productName,
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Spacer(),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            isOffer
+                                ? Text(
+                                    "Rs.$actualPrice",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 10.0,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  )
+                                : SizedBox(),
+                            Text(
+                              "Rs.$price",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 8.0,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -29,7 +29,7 @@ class ProductDetails extends StatefulWidget {
 class _ProductDetailsState extends State<ProductDetails> {
   final controller = PageController();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true;
+  bool isLoading = true, isWishListed = false;
   Response response;
   ProductDetailsModel model = ProductDetailsModel();
   ProductList product = ProductList();
@@ -66,6 +66,32 @@ class _ProductDetailsState extends State<ProductDetails> {
     });
   }
 
+  void getAddorRemoveWishlist() async {
+    setState(() {});
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    try {
+      response = await dio.post(allProducts, data: {
+        "apiMethod": isWishListed ? "removeFromWishlist" : "addtoWishlist",
+        "productId": widget.productId,
+        "mobileUniqueCode": mobileUniqueCode
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        isWishListed = !isWishListed;
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {});
+  }
+
   void _showSnackBar(String message) {
     _scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(message)));
@@ -80,6 +106,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       extendBodyBehindAppBar: true,
       floatingActionButton: SpeedDial(
         // both default to 16
@@ -176,7 +203,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                             PageView.builder(
                               physics: BouncingScrollPhysics(),
                               controller: controller,
-                              itemCount: product.productImages.length - 1,
+                              itemCount: product.productImages.length,
                               itemBuilder: (BuildContext context, int index) {
                                 return FadeInImage.memoryNetwork(
                                   placeholder: kTransparentImage,
@@ -192,7 +219,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                               child: SmoothPageIndicator(
                                   controller: controller,
                                   count: 3,
-                                  effect: ExpandingDotsEffect(
+                                  effect: WormEffect(
                                       spacing: 4.0,
                                       radius: 5.0,
                                       dotWidth: 10.0,
@@ -331,7 +358,17 @@ class _ProductDetailsState extends State<ProductDetails> {
                                           Padding(
                                             padding: const EdgeInsets.fromLTRB(
                                                 0, 8.0, 0, 2),
-                                            child: Icon(Icons.bookmark_border),
+                                            child: InkWell(
+                                              onTap: () {
+                                                getAddorRemoveWishlist();
+                                              },
+                                              child: Icon(
+                                                isWishListed
+                                                    ? Icons.favorite
+                                                    : Icons.favorite_border,
+                                                color: Colors.red,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       )
@@ -372,61 +409,68 @@ class _ProductDetailsState extends State<ProductDetails> {
                                   ),
                                 ),
                               ),
-                              Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        "Features",
-                                        textAlign: TextAlign.start,
-                                        style: TextStyle(
-                                            color: ThemeColors.themeColor5,
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(
-                                        height: 10.0,
-                                      ),
-                                      ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: product.features.isEmpty
-                                              ? 0
-                                              : product.features.length - 1,
-                                          itemBuilder:
-                                              (BuildContext ctxt, int index) {
-                                            print(product.features.length);
+                              product.features.isNotEmpty
+                                  ? Card(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text(
+                                              "Features",
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                  color:
+                                                      ThemeColors.themeColor5,
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            SizedBox(
+                                              height: 10.0,
+                                            ),
+                                            ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: product
+                                                        .features.isEmpty
+                                                    ? 0
+                                                    : product.features.length -
+                                                        1,
+                                                itemBuilder: (BuildContext ctxt,
+                                                    int index) {
+                                                  print(
+                                                      product.features.length);
 
-                                            return new Column(
-                                              children: <Widget>[
-                                                Row(
-                                                  children: <Widget>[
-                                                    Icon(
-                                                      FontAwesome.circle,
-                                                      size: 8.0,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 8.0,
-                                                    ),
-                                                    Text(
-                                                      product.features[index],
-                                                      style: TextStyle(
-                                                          fontSize: 14.0),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(
-                                                  height: 8.0,
-                                                ),
-                                              ],
-                                            );
-                                          }),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                                                  return new Column(
+                                                    children: <Widget>[
+                                                      Row(
+                                                        children: <Widget>[
+                                                          Icon(
+                                                            FontAwesome.circle,
+                                                            size: 8.0,
+                                                          ),
+                                                          SizedBox(
+                                                            width: 8.0,
+                                                          ),
+                                                          Text(
+                                                            product.features[
+                                                                index],
+                                                            style: TextStyle(
+                                                                fontSize: 14.0),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        height: 8.0,
+                                                      ),
+                                                    ],
+                                                  );
+                                                }),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  : SizedBox(),
                               Card(
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -530,6 +574,51 @@ class _ProductDetailsState extends State<ProductDetails> {
                               SizedBox(
                                 height: 16.0,
                               ),
+                              GridView.builder(
+                                  padding: EdgeInsets.only(top: 0),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 5.0,
+                                    mainAxisSpacing: 5.0,
+                                  ),
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  scrollDirection: Axis.vertical,
+                                  // crossAxisCount: 2,
+                                  itemCount: model.sameMerchantProducts.isEmpty
+                                      ? 0
+                                      : model.sameMerchantProducts.length,
+                                  itemBuilder: (context, index) => NearbyItem(
+                                        imagePath: model
+                                            .sameMerchantProducts[index]
+                                            .productImages[0],
+                                        productName: model
+                                            .sameMerchantProducts[index]
+                                            .productName,
+                                        isOffer: model
+                                                .sameMerchantProducts[index]
+                                                .isOffer ==
+                                            "yes",
+                                        isFeatured: model
+                                                .sameMerchantProducts[index]
+                                                .isFeature ==
+                                            "yes",
+                                        actualPrice: model
+                                            .sameMerchantProducts[index]
+                                            .actualAmount,
+                                        price: model.sameMerchantProducts[index]
+                                            .sellingAmount,
+                                        offerPercent: model
+                                            .sameMerchantProducts[index]
+                                            .offerAmount,
+                                        category: model
+                                            .sameMerchantProducts[index]
+                                            .shopCategoryName,
+                                        productId: model
+                                            .sameMerchantProducts[index]
+                                            .productId,
+                                      )),
                             ],
                           ),
                         ),
