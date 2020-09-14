@@ -28,8 +28,10 @@ class OfferMap extends StatefulWidget {
 
 class _OfferMapState extends State<OfferMap> {
   String _mapStyle;
-  Completer<GoogleMapController> _controller = Completer();
+  static const LatLng _center = const LatLng(13.0540, 80.2641);
   List<Marker> customMarkers = new List();
+  Completer<GoogleMapController> _controller = Completer();
+
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
   Response response;
@@ -89,8 +91,6 @@ class _OfferMapState extends State<OfferMap> {
     _scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(message)));
   }
-
-  static const LatLng _center = const LatLng(13.0540, 80.2641);
 
   @override
   void initState() {

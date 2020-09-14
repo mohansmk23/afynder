@@ -1,6 +1,16 @@
+import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/merchant_details.dart';
+import 'package:afynder/response_models/profile_info.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -10,6 +20,60 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _status = true;
   final FocusNode myFocusNode = FocusNode();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  bool isLoading = true;
+  Response response;
+  ProfileModel model = new ProfileModel();
+  TextEditingController fNameController = new TextEditingController();
+  TextEditingController lNameController = new TextEditingController();
+  TextEditingController emailIdController = new TextEditingController();
+  TextEditingController mobileNoController = new TextEditingController();
+
+  void getProfileDetails() async {
+    setState(() {
+      isLoading = true;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    try {
+      response = await dio.post(profileInfo, data: {
+        "apiMethod": "profileInfo",
+        "mobileUniqueCode": mobileUniqueCode
+      });
+
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        model = ProfileModel.fromJson(parsed);
+        fNameController.text = model.shopeeDetails.shopeeName;
+        lNameController.text = model.shopeeDetails.lastName;
+        emailIdController.text = model.shopeeDetails.mailId;
+        mobileNoController.text = model.shopeeDetails.contactNumber;
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(message)));
+  }
+
+  @override
+  Future<void> initState() {
+    // TODO: implement initState
+    getProfileDetails();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,35 +116,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
-                                new Container(
+                                Container(
                                     width: 140.0,
                                     height: 140.0,
+                                    child: ClipOval(
+                                      child: FadeInImage.memoryNetwork(
+                                        image: model.shopeeDetails.profileImage,
+                                        placeholder: kTransparentImage,
+                                        fadeInDuration: Duration(seconds: 1),
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
                                     decoration: new BoxDecoration(
                                       shape: BoxShape.circle,
-                                      image: new DecorationImage(
-                                        image: new ExactAssetImage(
-                                            'assets/profileavatar.jpg'),
-                                        fit: BoxFit.cover,
-                                      ),
+                                      color: Colors.blue,
                                     )),
                               ],
                             ),
-                            Padding(
-                                padding:
-                                    EdgeInsets.only(top: 90.0, right: 100.0),
-                                child: new Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    new CircleAvatar(
-                                      backgroundColor: Colors.red,
-                                      radius: 25.0,
-                                      child: new Icon(
-                                        Icons.camera_alt,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  ],
-                                )),
+                            Visibility(
+                              visible: !_status,
+                              child: Padding(
+                                  padding:
+                                      EdgeInsets.only(top: 90.0, right: 100.0),
+                                  child: new Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      new CircleAvatar(
+                                        backgroundColor: Colors.red,
+                                        radius: 25.0,
+                                        child: new Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    ],
+                                  )),
+                            ),
                           ]),
                         )
                       ],
@@ -116,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         width: 8.0,
                                       ),
                                       Text(
-                                        "580 Rs",
+                                        "${model.shopeeDetails.walletAmount} Rs",
                                         style: TextStyle(
                                             color: Colors.indigo,
                                             fontWeight: FontWeight.bold,
@@ -159,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           width: 8.0,
                                         ),
                                         Text(
-                                          "27",
+                                          model.shopeeDetails.wislistCount,
                                           style: TextStyle(
                                               color: Colors.indigo,
                                               fontWeight: FontWeight.bold,
@@ -208,13 +279,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Container(
                                         width: 75.0,
                                         height: 75.0,
+                                        child: ClipOval(
+                                          child: FadeInImage.memoryNetwork(
+                                            image: model
+                                                .shopeeDetails.profileImage,
+                                            placeholder: kTransparentImage,
+                                            fadeInDuration:
+                                                Duration(seconds: 1),
+                                            fit: BoxFit.fill,
+                                          ),
+                                        ),
                                         decoration: new BoxDecoration(
                                           shape: BoxShape.circle,
-                                          image: new DecorationImage(
-                                            image: new ExactAssetImage(
-                                                'assets/profileavatar.jpg'),
-                                            fit: BoxFit.cover,
-                                          ),
+                                          color: Colors.blue,
                                         )),
                                     SizedBox(
                                       height: 16.0,
@@ -232,7 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           width: 8.0,
                                         ),
                                         Text(
-                                          "John Doe",
+                                          model.shopeeDetails.shopeeName,
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 16.0,
@@ -283,134 +360,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 mainAxisSize: MainAxisSize.max,
                                 children: <Widget>[
-                                  new Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      new Text(
-                                        'Personal Information',
-                                        style: TextStyle(
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
+                                  Text(
+                                    'Personal Information',
+                                    style: TextStyle(
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                  new Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      _status ? _getEditIcon() : Container(),
-                                    ],
-                                  )
+                                  Spacer(),
+                                  _status ? _getEditIcon() : SizedBox()
                                 ],
                               )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 25.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      new Text(
-                                        'Name',
-                                        style: TextStyle(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 2.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Flexible(
-                                    child: new TextField(
-                                      decoration: const InputDecoration(
-                                        hintText: "Enter Your Name",
-                                      ),
-                                      enabled: !_status,
-                                      autofocus: !_status,
-                                    ),
-                                  ),
-                                ],
-                              )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 25.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      new Text(
-                                        'Email ID',
-                                        style: TextStyle(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 2.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Flexible(
-                                    child: new TextField(
-                                      decoration: const InputDecoration(
-                                          hintText: "Enter Email ID"),
-                                      enabled: !_status,
-                                    ),
-                                  ),
-                                ],
-                              )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 25.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      new Text(
-                                        'Mobile',
-                                        style: TextStyle(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )),
-                          Padding(
-                              padding: EdgeInsets.only(
-                                  left: 25.0, right: 25.0, top: 2.0),
-                              child: new Row(
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  new Flexible(
-                                    child: new TextField(
-                                      decoration: const InputDecoration(
-                                          hintText: "Enter Mobile Number"),
-                                      enabled: !_status,
-                                    ),
-                                  ),
-                                ],
-                              )),
+                          profileTextField(
+                              hint: "First Name",
+                              controller: fNameController,
+                              validator: () {}),
+                          profileTextField(
+                              hint: "Last Name",
+                              controller: lNameController,
+                              validator: () {}),
+                          profileTextField(
+                              hint: "E-Mail",
+                              controller: emailIdController,
+                              validator: () {}),
+                          profileTextField(
+                              hint: "Mobile",
+                              controller: mobileNoController,
+                              validator: () {}),
                           !_status ? _getActionButtons() : new Container(),
                         ],
                       ),
@@ -421,6 +396,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ));
+  }
+
+  Column profileTextField(
+      {String hint, TextEditingController controller, Function validator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+            padding: EdgeInsets.only(left: 25.0, top: 25.0),
+            child: new Text(
+              hint,
+              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            )),
+        Padding(
+            padding: EdgeInsets.only(left: 25.0, right: 25.0, top: 2.0),
+            child: new Expanded(
+              child: new TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  hintText: "",
+                ),
+                enabled: !_status,
+                autofocus: !_status,
+              ),
+            )),
+      ],
+    );
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/product_details_model.dart';
+import 'package:afynder/screens/merchantprofile_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -557,15 +558,28 @@ class _ProductDetailsState extends State<ProductDetails> {
                                         Navigator.pushNamed(
                                             context, '/merchantdetails');
                                       },
-                                      child: Text(
-                                        "View Seller Info",
-                                        textAlign: TextAlign.start,
-                                        style: TextStyle(
-                                            decoration:
-                                                TextDecoration.underline,
-                                            color: ThemeColors.themeColor5,
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.bold),
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  MerchantProfile(
+                                                merchantId: product.merchantId,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          "View Seller Info",
+                                          textAlign: TextAlign.start,
+                                          style: TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              color: ThemeColors.themeColor5,
+                                              fontSize: 14.0,
+                                              fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
                                   ],

@@ -30,9 +30,15 @@ class ShoppeInformations {
   String mailId;
   String lastName;
   String authKey;
+  String profileImage;
 
   ShoppeInformations(
-      {this.id, this.firstName, this.mailId, this.lastName, this.authKey});
+      {this.id,
+      this.firstName,
+      this.mailId,
+      this.lastName,
+      this.authKey,
+      this.profileImage});
 
   ShoppeInformations.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -40,6 +46,7 @@ class ShoppeInformations {
     mailId = json['mailId'];
     lastName = json['lastName'];
     authKey = json['authKey'];
+    profileImage = json['profileImage'];
   }
 
   Map<String, dynamic> toJson() {
@@ -49,6 +56,7 @@ class ShoppeInformations {
     data['mailId'] = this.mailId;
     data['lastName'] = this.lastName;
     data['authKey'] = this.authKey;
+    data['profileImage'] = this.profileImage;
     return data;
   }
 }

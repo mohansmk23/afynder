@@ -5,3 +5,4 @@ const String categorySelection = "/category-selection";
 const String homeScreen = "/feature-product-mgnt";
 const String allProducts = "/shopee-product-mgnt";
 const String merchantLocationList = "/shopee-merchant-list";
+const String profileInfo = "/shopee-profile";
