@@ -11,6 +11,7 @@ import 'package:afynder/screens/signup_screen.dart';
 import 'package:afynder/screens/wishlist_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/sample_screen.dart';
 import 'screens/signin_screen.dart';
 import 'screens/landing_screen.dart';
@@ -26,12 +27,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(initialRoute: '/', routes: {
+    return MaterialApp(initialRoute: Dashboard.routeName, routes: {
       '/': (context) => LandingScreen(),
       '/signin': (context) => SigninScreen(),
       Categories.routeName: (context) => Categories(),
       '/signup': (context) => SignUpScreen(),
-      '/profile': (context) => ProfileScreen(),
+      ProfileScreen.routeName: (context) => ProfileScreen(),
       Dashboard.routeName: (context) => Dashboard(),
       '/productdetails': (context) => ProductDetails(),
       '/merchantdetails': (context) => MerchantProfile(),

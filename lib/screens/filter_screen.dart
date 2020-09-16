@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
@@ -23,32 +24,17 @@ class _FilterScreenState extends State<FilterScreen> {
   var labels;
   var startLabel;
   var endLabel;
-  var locationSelectedPosition;
-  var categorySelectedPosition;
   var sortSelectedPosition;
-  var isAgeChanged = false;
-  var isPriceChanged = false;
-  var isLocationChanged = false;
-  var isCategoryChanged = false;
   var themeData;
   var dateRangeValue = "";
-  var minPrice = 10.0;
-  var maxPrice = 10000.0;
+  var minPrice = 100.0;
+  var maxPrice = 100000.0;
   DateTime fromDate;
   DateTime toDate;
   bool isLoading;
 
   GlobalKey<ScaffoldState> scaffoldState = GlobalKey();
-
-  Map<String, String> _eventName = {};
-
-  List<String> locationValues = [
-    "All",
-    "< 5 Kms",
-    "5 to 10 Kms",
-    "10 to 20Kms",
-    "20+ Kms"
-  ];
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   List<String> sortingValues = [
     "Price High to low",
@@ -63,8 +49,9 @@ class _FilterScreenState extends State<FilterScreen> {
     setState(() {
       isLoading = false;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       var response = await dio.post(fetchCategories, data: {
@@ -136,7 +123,6 @@ class _FilterScreenState extends State<FilterScreen> {
       onSelected: (value) {
         setState(() {
           if (value) {
-            isCategoryChanged = true;
             sortSelectedPosition = ageIndex;
           } else {
             sortSelectedPosition = null;
@@ -152,8 +138,6 @@ class _FilterScreenState extends State<FilterScreen> {
     labels = RangeLabels("Rs  ${minPrice.round()}", "Rs ${maxPrice.round()}");
     startLabel = "Rs ${minPrice.round()}";
     endLabel = "Rs ${maxPrice.round()}";
-    locationSelectedPosition = 0;
-    categorySelectedPosition = 0;
     getCategories();
     super.initState();
   }
@@ -303,6 +287,7 @@ class _FilterScreenState extends State<FilterScreen> {
                         filterSelection.priceFrom =
                             values.start.round().toString();
                         filterSelection.priceTo = values.end.round().toString();
+                        filterSelection.mobileUniqueCode = mobileUniqueCode;
 
                         filterSelection.sorting = sortSelectedPosition == 1
                             ? "priceAsc"
@@ -312,11 +297,13 @@ class _FilterScreenState extends State<FilterScreen> {
                         for (int selectedIndex in selectedCatIndexes) {
                           filterSelection.categories.add(Categories(
                               categoryId:
-                                  categoryList[selectedIndex].categoryId));
+                                  categoryList[selectedIndex].categoryId,
+                              categoryName:
+                                  categoryList[selectedIndex].categoryName));
                         }
-                        print(jsonEncode(filterSelection.toJson()));
 
-                        // Navigator.pop(context);
+                        Navigator.pop(
+                            context, jsonEncode(filterSelection.toJson()));
                       },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
@@ -334,7 +321,17 @@ class _FilterScreenState extends State<FilterScreen> {
                             color: ThemeColors.themeOrange,
                             fontWeight: FontWeight.bold),
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        setState(() {
+                          selectedCatIndexes.clear();
+                          sortSelectedPosition = null;
+                          values = RangeValues(minPrice, maxPrice);
+                          labels = RangeLabels("Rs  ${minPrice.round()}",
+                              "Rs ${maxPrice.round()}");
+                          startLabel = "Rs ${minPrice.round()}";
+                          endLabel = "Rs ${maxPrice.round()}";
+                        });
+                      },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                         side: BorderSide(color: ThemeColors.themeOrange),

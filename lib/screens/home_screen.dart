@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/homesccreen_model.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
   Response response;
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   List<ChoosenList> choiceList = [];
   List<ProductList> featuredList = [];
@@ -30,8 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    print(await _sharedPrefManager.getAuthKey());
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(homeScreen, data: {
@@ -144,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount:
-                            featuredList.isEmpty ? 0 : featuredList.length - 1,
+                            featuredList.isEmpty ? 0 : featuredList.length,
                         itemBuilder: (BuildContext ctxt, int index) {
                           return FeaturedItem(
                             imagePath: featuredList[index].productImages[0],
@@ -185,10 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         shrinkWrap: true,
                         physics: ClampingScrollPhysics(),
                         scrollDirection: Axis.vertical,
-                        itemCount:
-                            choiceList.isEmpty ? 0 : choiceList.length - 1,
+                        itemCount: choiceList.isEmpty ? 0 : choiceList.length,
                         itemBuilder: (BuildContext ctxt, int index) {
                           return new ChoiceItem(
+                            productId: choiceList[index].productId,
                             imagePath: choiceList[index].productImages[0],
                             productName: choiceList[index].productName,
                             isOffer: choiceList[index].isOffer == "yes",
@@ -212,6 +216,7 @@ class ChoiceItem extends StatelessWidget {
       productName,
       price,
       offerPercent,
+      productId,
       actualPrice;
   final bool isOffer;
 
@@ -222,96 +227,109 @@ class ChoiceItem extends StatelessWidget {
       this.price,
       this.isOffer,
       this.offerPercent,
-      this.actualPrice});
+      this.actualPrice,
+      this.productId});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      child: Card(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Stack(
-                children: <Widget>[
-                  FadeInImage.memoryNetwork(
-                    image: imagePath,
-                    placeholder: kTransparentImage,
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.fitWidth,
-                  ),
-                  Visibility(
-                    visible: isOffer,
-                    child: Align(
-                        alignment: Alignment.topRight,
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Text(
-                              "$offerPercent% OFF",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductDetails(
+                productId: productId,
+              ),
+            ),
+          );
+        },
+        child: Card(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Stack(
+                  children: <Widget>[
+                    FadeInImage.memoryNetwork(
+                      image: imagePath,
+                      placeholder: kTransparentImage,
+                      width: double.infinity,
+                      height: 150,
+                      fit: BoxFit.fitWidth,
+                    ),
+                    Visibility(
+                      visible: isOffer,
+                      child: Align(
+                          alignment: Alignment.topRight,
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                "$offerPercent% OFF",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                            ),
+                            color: ThemeColors.themeOrange,
+                          )),
+                    )
+                  ],
+                ),
+                Row(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            productName,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14.0,
                             ),
                           ),
-                          color: ThemeColors.themeOrange,
-                        )),
-                  )
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                          Text(
+                            categoryName,
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
+                        isOffer
+                            ? Text(
+                                "Rs. $actualPrice",
+                                style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14.0,
+                                    decoration: TextDecoration.lineThrough),
+                              )
+                            : SizedBox(),
                         Text(
-                          productName,
+                          "Rs. $price",
                           style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14.0,
-                          ),
-                        ),
-                        Text(
-                          categoryName,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12.0,
-                          ),
+                              color: ThemeColors.themeColor5, fontSize: 14.0),
                         ),
                       ],
                     ),
-                  ),
-                  Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      isOffer
-                          ? Text(
-                              "Rs. $actualPrice",
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14.0,
-                                  decoration: TextDecoration.lineThrough),
-                            )
-                          : SizedBox(),
-                      Text(
-                        "Rs. $price",
-                        style: TextStyle(
-                            color: ThemeColors.themeColor5, fontSize: 14.0),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    width: 8.0,
-                  )
-                ],
-              ),
-            ],
+                    SizedBox(
+                      width: 8.0,
+                    )
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

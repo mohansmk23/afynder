@@ -10,6 +10,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:afynder/screens/signin_screen.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'landing_screen.dart';
@@ -50,8 +51,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         prefs.setString(firstNameKey, fName);
         prefs.setString(lastNameKey, lName);
         prefs.setString(mailIdKey, email);
+        prefs.setBool(isSignnedIn, true);
         prefs.setString(authorizationKey, parsed['authKey']);
-        Navigator.pushNamed(context, Categories.routeName);
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              Categories.routeName, (Route<dynamic> route) => false);
+        });
       } else {
         _showSnackBar(parsed["message"]);
       }
@@ -71,298 +76,300 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        key: _scaffoldKey,
-        body: Builder(
-            builder: (context) => SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ListView(
-                      children: <Widget>[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Icon(
-                                Icons.close,
+    return Scaffold(
+      key: _scaffoldKey,
+      body: Builder(
+          builder: (context) => SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ListView(
+                    children: <Widget>[
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 12.0,
+                          ),
+                          Text(
+                            "aFynder",
+                            style: TextStyle(
                                 color: Colors.grey,
+                                fontSize: 28.0,
+                                fontFamily: 'pacifico'),
+                          ),
+                          Text(
+                            'Sign up to afynder',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(
+                            height: 24.0,
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: SocialMediaButton(
+                                  text: "Google",
+                                  prefixIcon: Icon(
+                                    FontAwesome.google,
+                                    color: Colors.white,
+                                  ),
+                                  buttonColor: Colors.blue,
+                                  onTap: () {},
+                                ),
                               ),
-                            ),
-                            SizedBox(
-                              height: 12.0,
-                            ),
-                            Text(
-                              "aFynder",
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 28.0,
-                                  fontFamily: 'pacifico'),
-                            ),
-                            Text(
-                              'Sign up to afynder',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 24.0,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(
-                              height: 24.0,
-                            ),
-                            Row(
+                              SizedBox(
+                                width: 8.0,
+                              ),
+                              Expanded(
+                                child: SocialMediaButton(
+                                  text: "Facebook",
+                                  prefixIcon: Icon(
+                                    FontAwesome.facebook,
+                                    color: Colors.white,
+                                  ),
+                                  buttonColor: Colors.blueAccent,
+                                  onTap: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 24.0,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              Expanded(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(0, 0, 8.0, 0),
+                                  child: Container(
+                                    height: 1.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                "Or",
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 16.0),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
+                                  child: Container(
+                                    height: 1.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 24.0,
+                          ),
+                          Form(
+                            key: _formKey,
+                            child: Column(
                               children: <Widget>[
-                                Expanded(
-                                  child: SocialMediaButton(
-                                    text: "Google",
-                                    prefixIcon: Icon(
-                                      FontAwesome.google,
-                                      color: Colors.white,
+                                Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: LabelFormField(
+                                        label: 'First Name',
+                                        keyboardType: TextInputType.text,
+                                        isPassword: false,
+                                        validator: (value) {
+                                          if (value.isEmpty) {
+                                            return 'Please enter first name';
+                                          } else {
+                                            fName = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
                                     ),
-                                    buttonColor: Colors.blue,
-                                    onTap: () {},
+                                    SizedBox(
+                                      width: 16.0,
+                                    ),
+                                    Expanded(
+                                      child: LabelFormField(
+                                        label: 'Last Name',
+                                        keyboardType: TextInputType.text,
+                                        isPassword: false,
+                                        validator: (value) {
+                                          if (value.isEmpty) {
+                                            return 'Please enter last name';
+                                          } else {
+                                            lName = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                LabelFormField(
+                                  label: 'Email',
+                                  isPassword: false,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (value) {
+                                    if (!RegExp(
+                                            r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
+                                        .hasMatch(value)) {
+                                      return 'Please enter valid email';
+                                    } else {
+                                      email = value;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                LabelFormField(
+                                  label: 'Mobile',
+                                  keyboardType: TextInputType.phone,
+                                  isPassword: false,
+                                  validator: (value) {
+                                    if (value.length != 10) {
+                                      return 'Please enter valid mobile number';
+                                    } else {
+                                      mobile = value;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                LabelFormField(
+                                  label: 'Password',
+                                  keyboardType: TextInputType.visiblePassword,
+                                  isPassword: true,
+                                  validator: (value) {
+                                    if (value.isEmpty) {
+                                      return 'Please enter valid password';
+                                    } else {
+                                      password = value;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                CheckboxListTile(
+                                  title: Text(
+                                    "I agree to the Terms and Conditions & privacy policy",
+                                    style: TextStyle(fontSize: 15.0),
+                                  ),
+                                  value: _terms,
+                                  onChanged: (newval) {
+                                    setState(() {
+                                      _terms = newval;
+                                    });
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: RaisedButton(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6.0),
+                                    ),
+                                    padding: EdgeInsets.all(10.0),
+                                    child: isLoading
+                                        ? Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: <Widget>[
+                                              SizedBox(
+                                                  width: 22.0,
+                                                  height: 22.0,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation(
+                                                            Colors.white),
+                                                  )),
+                                              SizedBox(
+                                                width: 16.0,
+                                              ),
+                                              Text(
+                                                "Signing Up",
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 20.0),
+                                              ),
+                                            ],
+                                          )
+                                        : Text(
+                                            "Sign Up",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20.0),
+                                          ),
+                                    color: ThemeColors.themeOrange,
+                                    onPressed: () {
+                                      if (_formKey.currentState.validate()) {
+                                        if (_terms) {
+                                          setState(() {
+                                            signUp();
+                                          });
+                                        } else {
+                                          Scaffold.of(context).showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Please Accept Terms & Conditions')));
+                                        }
+                                      }
+
+                                      //  Navigator.pushNamed(context, '/dashboard');
+                                    },
                                   ),
                                 ),
                                 SizedBox(
-                                  width: 8.0,
-                                ),
-                                Expanded(
-                                  child: SocialMediaButton(
-                                    text: "Facebook",
-                                    prefixIcon: Icon(
-                                      FontAwesome.facebook,
-                                      color: Colors.white,
-                                    ),
-                                    buttonColor: Colors.blueAccent,
-                                    onTap: () {},
-                                  ),
+                                  height: 24.0,
                                 ),
                               ],
                             ),
-                            SizedBox(
-                              height: 24.0,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 0, 8.0, 0),
-                                    child: Container(
-                                      height: 1.0,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  "Or",
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 16.0),
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
-                                    child: Container(
-                                      height: 1.0,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              height: 24.0,
-                            ),
-                            Form(
-                              key: _formKey,
-                              child: Column(
-                                children: <Widget>[
-                                  Row(
-                                    children: <Widget>[
-                                      Expanded(
-                                        child: LabelFormField(
-                                          label: 'First Name',
-                                          keyboardType: TextInputType.text,
-                                          validator: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Please enter first name';
-                                            } else {
-                                              fName = value;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 16.0,
-                                      ),
-                                      Expanded(
-                                        child: LabelFormField(
-                                          label: 'Last Name',
-                                          keyboardType: TextInputType.text,
-                                          validator: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Please enter last name';
-                                            } else {
-                                              lName = value;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 16.0,
-                                  ),
-                                  LabelFormField(
-                                    label: 'Email',
-                                    keyboardType: TextInputType.emailAddress,
-                                    validator: (value) {
-                                      if (!RegExp(
-                                              r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
-                                          .hasMatch(value)) {
-                                        return 'Please enter valid email';
-                                      } else {
-                                        email = value;
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 16.0,
-                                  ),
-                                  LabelFormField(
-                                    label: 'Mobile',
-                                    keyboardType: TextInputType.phone,
-                                    validator: (value) {
-                                      if (value.length != 10) {
-                                        return 'Please enter valid mobile number';
-                                      } else {
-                                        mobile = value;
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 16.0,
-                                  ),
-                                  LabelFormField(
-                                    label: 'Password',
-                                    keyboardType: TextInputType.visiblePassword,
-                                    validator: (value) {
-                                      if (value.isEmpty) {
-                                        return 'Please enter valid password';
-                                      } else {
-                                        password = value;
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 16.0,
-                                  ),
-                                  CheckboxListTile(
-                                    title: Text(
-                                      "I agree to the Terms and Conditions & privacy policy",
-                                      style: TextStyle(fontSize: 15.0),
-                                    ),
-                                    value: _terms,
-                                    onChanged: (newval) {
-                                      setState(() {
-                                        _terms = newval;
-                                      });
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 16.0,
-                                  ),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: RaisedButton(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(6.0),
-                                      ),
-                                      padding: EdgeInsets.all(10.0),
-                                      child: isLoading
-                                          ? Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: <Widget>[
-                                                SizedBox(
-                                                    width: 22.0,
-                                                    height: 22.0,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation(
-                                                              Colors.white),
-                                                    )),
-                                                SizedBox(
-                                                  width: 16.0,
-                                                ),
-                                                Text(
-                                                  "Signing Up",
-                                                  style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 20.0),
-                                                ),
-                                              ],
-                                            )
-                                          : Text(
-                                              "Sign Up",
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 20.0),
-                                            ),
-                                      color: ThemeColors.themeOrange,
-                                      onPressed: () {
-                                        if (_formKey.currentState.validate()) {
-                                          if (_terms) {
-                                            setState(() {
-                                              signUp();
-                                            });
-                                          } else {
-                                            Scaffold.of(context).showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Please Accept Terms & Conditions')));
-                                          }
-                                        }
-
-                                        //  Navigator.pushNamed(context, '/dashboard');
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 24.0,
-                                  ),
-                                ],
+                          ),
+                          Center(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/signin');
+                              },
+                              child: Text(
+                                "Already a member? sign in",
+                                textAlign: TextAlign.center,
                               ),
                             ),
-                            Center(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/signin');
-                                },
-                                child: Text(
-                                  "Already a member? sign in",
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                )),
-      ),
+                ),
+              )),
     );
   }
 }
@@ -371,8 +378,10 @@ class LabelFormField extends StatelessWidget {
   final String label;
   final Function validator;
   final TextInputType keyboardType;
+  final bool isPassword;
 
-  const LabelFormField({this.label, this.validator, this.keyboardType});
+  const LabelFormField(
+      {this.label, this.validator, this.keyboardType, this.isPassword});
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +400,7 @@ class LabelFormField extends StatelessWidget {
           validator: validator,
           textAlign: TextAlign.start,
           keyboardType: keyboardType,
+          obscureText: isPassword,
           textInputAction: TextInputAction.next,
           onEditingComplete: () => FocusScope.of(context).nextFocus(),
           decoration: new InputDecoration(

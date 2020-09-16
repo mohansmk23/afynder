@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/merchant_details.dart';
 import 'package:afynder/response_models/merchant_product_list.dart';
@@ -26,6 +27,7 @@ class MerchantProfile extends StatefulWidget {
 class _MerchantProfileState extends State<MerchantProfile>
     with TickerProviderStateMixin {
   TabController _controller;
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
@@ -38,8 +40,9 @@ class _MerchantProfileState extends State<MerchantProfile>
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(merchantLocationList, data: {
@@ -70,8 +73,9 @@ class _MerchantProfileState extends State<MerchantProfile>
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(allProducts, data: {

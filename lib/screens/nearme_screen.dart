@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/all_products_model.dart';
+import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/screens/filter_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
@@ -21,34 +23,37 @@ class NearMe extends StatefulWidget {
 
 class _NearMeState extends State<NearMe> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true;
+  bool isLoading = true, isFiltered = false, isEmptyState = true;
+  String filterParams;
   Response response;
-
   List<ProductList> productList = [];
+  FilterSelection requestModel = FilterSelection();
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   void getAllProducts() async {
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
-      response = await dio.post(allProducts, data: {
-        "apiMethod": "productList",
-        "productId": "",
-        "searchString": "",
-        "mobileUniqueCode": mobileUniqueCode
-      });
+      response = await dio.post(allProducts, data: requestModel);
+      print(json.encode(requestModel));
       print(response);
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
         final AllProducts model = AllProducts.fromJson(parsed);
         productList = model.productList.toList();
+        isEmptyState = false;
+        _showSnackBar(parsed["message"]);
       } else {
+        isEmptyState = true;
         _showSnackBar(parsed["message"]);
       }
     } catch (e) {
+      isEmptyState = true;
       _showSnackBar("Network Error");
       print(e);
     }
@@ -63,8 +68,40 @@ class _NearMeState extends State<NearMe> {
         .showSnackBar(new SnackBar(content: new Text(message)));
   }
 
+  List<Widget> getFilteredChips() {
+    List<Widget> chips = [];
+
+    for (Categories category in requestModel.categories) {
+      chips.add(filterChipWidget(category.categoryName));
+    }
+
+    if (requestModel.sorting.isNotEmpty) {
+      chips.add(filterChipWidget(requestModel.sorting == "priceAsc"
+          ? "Price Low to High"
+          : "Price High to Low"));
+    }
+
+    chips.add(filterChipWidget(
+        "Price ${requestModel.priceFrom} - ${requestModel.priceTo}"));
+
+    return chips;
+  }
+
+  Widget filterChipWidget(String txt) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 4.0),
+      child: Chip(
+        label: Text(txt),
+      ),
+    );
+  }
+
   @override
   void initState() {
+    requestModel.apiMethod = "productList";
+    requestModel.productId = "";
+    requestModel.searchString = "";
+    requestModel.categories = [];
     getAllProducts();
     super.initState();
   }
@@ -77,19 +114,20 @@ class _NearMeState extends State<NearMe> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
-              padding: EdgeInsets.fromLTRB(12.0, 0, 12.0, 36.0),
               color: Colors.grey[200],
               child: ListView(
-                padding: EdgeInsets.only(bottom: 36.0),
                 children: <Widget>[
-                  SizedBox(
-                    height: 12.0,
+                  Container(
+                    color: Colors.grey[200],
+                    child: Wrap(
+                      children: isFiltered ? getFilteredChips() : [SizedBox()],
+                    ),
                   ),
                   Row(
                     children: <Widget>[
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 0.0, horizontal: 0.0),
+                            vertical: 0.0, horizontal: 12.0),
                         child: Text(
                           "Todays Picks",
                           style: TextStyle(
@@ -108,26 +146,19 @@ class _NearMeState extends State<NearMe> {
                               color: Colors.blue,
                             ),
                             InkWell(
-                              onTap: () {
-                                showGeneralDialog(
-                                    barrierColor: Colors.black.withOpacity(0.5),
-                                    //SHADOW EFFECT
-                                    transitionBuilder:
-                                        (context, a1, a2, widget) {
-                                      return Center(
-                                        child: Container(child: FilterScreen()),
-                                      );
-                                    },
-                                    transitionDuration:
-                                        Duration(milliseconds: 200),
-                                    // DURATION FOR ANIMATION
-                                    barrierDismissible: true,
-                                    barrierLabel: 'LABEL',
-                                    context: context,
-                                    pageBuilder:
-                                        (context, animation1, animation2) {
-                                      return Text('PAGE BUILDER');
-                                    });
+                              onTap: () async {
+                                filterParams = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FilterScreen(),
+                                    ));
+
+                                setState(() {
+                                  requestModel = FilterSelection.fromJson(
+                                      json.decode(filterParams));
+                                  isFiltered = true;
+                                  getAllProducts();
+                                });
                               },
                               child: Text(
                                 " Filter",
@@ -139,29 +170,50 @@ class _NearMeState extends State<NearMe> {
                       )
                     ],
                   ),
-                  GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 5.0,
-                        mainAxisSpacing: 5.0,
-                      ),
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      scrollDirection: Axis.vertical,
-                      // crossAxisCount: 2,
-                      itemCount:
-                          productList.isEmpty ? 0 : productList.length - 1,
-                      itemBuilder: (context, index) => NearbyItem(
-                            imagePath: productList[index].productImages[0],
-                            productName: productList[index].productName,
-                            isOffer: productList[index].isOffer == "yes",
-                            isFeatured: productList[index].isFeature == "yes",
-                            actualPrice: productList[index].actualAmount,
-                            price: productList[index].sellingAmount,
-                            offerPercent: productList[index].offerAmount,
-                            category: productList[index].shopCategoryName,
-                            productId: productList[index].productId,
-                          )),
+                  isEmptyState
+                      ? emptyState()
+                      : ListView(
+                          physics: ClampingScrollPhysics(),
+                          shrinkWrap: true,
+                          padding: EdgeInsets.fromLTRB(12.0, 0, 12.0, 36.0),
+                          children: <Widget>[
+                            SizedBox(
+                              height: 12.0,
+                            ),
+                            GridView.builder(
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 5.0,
+                                  mainAxisSpacing: 5.0,
+                                ),
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                scrollDirection: Axis.vertical,
+                                // crossAxisCount: 2,
+                                itemCount: productList.isEmpty
+                                    ? 0
+                                    : productList.length,
+                                itemBuilder: (context, index) => NearbyItem(
+                                      imagePath:
+                                          productList[index].productImages[0],
+                                      productName:
+                                          productList[index].productName,
+                                      isOffer:
+                                          productList[index].isOffer == "yes",
+                                      isFeatured:
+                                          productList[index].isFeature == "yes",
+                                      actualPrice:
+                                          productList[index].actualAmount,
+                                      price: productList[index].sellingAmount,
+                                      offerPercent:
+                                          productList[index].offerAmount,
+                                      category:
+                                          productList[index].shopCategoryName,
+                                      productId: productList[index].productId,
+                                    )),
+                          ],
+                        ),
                 ],
               ),
             ),
@@ -339,4 +391,27 @@ class NearbyItem extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget emptyState() {
+  return Center(
+    child: Column(
+      children: <Widget>[
+        Image.asset('assets/nodata.png'),
+        Text("No Products Found",
+            style: TextStyle(
+                color: Colors.blueGrey[800],
+                fontWeight: FontWeight.bold,
+                fontSize: 18.0)),
+        SizedBox(
+          height: 8.0,
+        ),
+        Text("Try changing filter optons",
+            style: TextStyle(
+                color: Colors.blueGrey[600],
+                fontWeight: FontWeight.bold,
+                fontSize: 12.0)),
+      ],
+    ),
+  );
 }

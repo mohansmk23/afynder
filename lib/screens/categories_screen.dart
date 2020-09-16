@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/category_selection.dart';
@@ -9,6 +10,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -25,12 +27,13 @@ class _CategoriesState extends State<Categories> {
   bool isLoading = true;
   Response response;
   int selectedCount = 0;
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   List<CategoryList> categoryList = [];
 
   void getCategories() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(fetchCategories,
@@ -58,8 +61,8 @@ class _CategoriesState extends State<Categories> {
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       print(json.encode(model));
@@ -68,7 +71,10 @@ class _CategoriesState extends State<Categories> {
 
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
-        Navigator.pushNamed(context, Dashboard.routeName);
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              Dashboard.routeName, (Route<dynamic> route) => false);
+        });
       } else {
         _showSnackBar(parsed["message"]);
       }

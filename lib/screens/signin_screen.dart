@@ -8,6 +8,7 @@ import 'package:afynder/screens/categories_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:afynder/main.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/colors.dart';
 import 'dashboard_screen.dart';
@@ -48,7 +49,11 @@ class _SigninScreenState extends State<SigninScreen> {
         prefs.setString(lastNameKey, model.shoppeInformations.lastName);
         prefs.setString(mailIdKey, model.shoppeInformations.mailId);
         prefs.setString(authorizationKey, model.shoppeInformations.authKey);
-        Navigator.pushNamed(context, Dashboard.routeName);
+        prefs.setBool(isSignnedIn, true);
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              Dashboard.routeName, (Route<dynamic> route) => false);
+        });
         //  Navigator.pop(context);
       } else {
         _showSnackBar(parsed["message"]);
@@ -114,6 +119,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       children: <Widget>[
                         RectFormField(
                           hint: 'Email',
+                          isPassword: false,
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Please enter valid email';
@@ -128,6 +134,7 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                         RectFormField(
                           hint: 'Password',
+                          isPassword: true,
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Please enter valid password';
@@ -221,8 +228,9 @@ class _SigninScreenState extends State<SigninScreen> {
 class RectFormField extends StatelessWidget {
   final String hint;
   final Function validator;
+  final bool isPassword;
 
-  const RectFormField({this.hint, this.validator});
+  const RectFormField({this.hint, this.validator, this.isPassword});
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +238,7 @@ class RectFormField extends StatelessWidget {
       validator: validator,
       textAlign: TextAlign.start,
       textInputAction: TextInputAction.next,
+      obscureText: isPassword,
       onEditingComplete: () => FocusScope.of(context).nextFocus(),
       decoration: new InputDecoration(
           contentPadding: EdgeInsets.all(16.0),

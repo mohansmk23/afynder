@@ -60,6 +60,7 @@ class ProductList {
   String shortDescription;
   String longDescription;
   String activeStatus;
+  String wishlistStatus;
   String shopCategoryName;
   String shopLogo;
   String merchantName;
@@ -93,6 +94,7 @@ class ProductList {
       this.shortDescription,
       this.longDescription,
       this.activeStatus,
+      this.wishlistStatus,
       this.shopCategoryName,
       this.shopLogo,
       this.merchantName,
@@ -131,6 +133,7 @@ class ProductList {
     shortDescription = json['shortDescription'];
     longDescription = json['longDescription'];
     activeStatus = json['activeStatus'];
+    wishlistStatus = json['wishlistStatus'];
     shopCategoryName = json['shopCategoryName'];
     shopLogo = json['shopLogo'];
     merchantName = json['merchantName'];
@@ -169,6 +172,7 @@ class ProductList {
     data['shortDescription'] = this.shortDescription;
     data['longDescription'] = this.longDescription;
     data['activeStatus'] = this.activeStatus;
+    data['wishlistStatus'] = this.wishlistStatus;
     data['shopCategoryName'] = this.shopCategoryName;
     data['shopLogo'] = this.shopLogo;
     data['merchantName'] = this.merchantName;
@@ -225,6 +229,7 @@ class SameMerchantProducts {
   String longDescription;
   String activeStatus;
   String shopCategoryName;
+  String wishlistStatus;
   String shopLogo;
   String merchantName;
   String shopMailId;
@@ -258,6 +263,7 @@ class SameMerchantProducts {
       this.longDescription,
       this.activeStatus,
       this.shopCategoryName,
+      this.wishlistStatus,
       this.shopLogo,
       this.merchantName,
       this.shopMailId,
@@ -291,6 +297,7 @@ class SameMerchantProducts {
     longDescription = json['longDescription'];
     activeStatus = json['activeStatus'];
     shopCategoryName = json['shopCategoryName'];
+    wishlistStatus = json['wishlistStatus'];
     shopLogo = json['shopLogo'];
     merchantName = json['merchantName'];
     shopMailId = json['shopMailId'];
@@ -326,6 +333,7 @@ class SameMerchantProducts {
     data['longDescription'] = this.longDescription;
     data['activeStatus'] = this.activeStatus;
     data['shopCategoryName'] = this.shopCategoryName;
+    data['wishlistStatus'] = this.wishlistStatus;
     data['shopLogo'] = this.shopLogo;
     data['merchantName'] = this.merchantName;
     data['shopMailId'] = this.shopMailId;

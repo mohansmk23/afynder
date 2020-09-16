@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/product_details_model.dart';
 import 'package:afynder/screens/merchantprofile_screen.dart';
@@ -29,8 +30,9 @@ class ProductDetails extends StatefulWidget {
 
 class _ProductDetailsState extends State<ProductDetails> {
   final controller = PageController();
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true, isWishListed = false;
+  bool isLoading = true, isWishListed = false, isSignedIn;
   Response response;
   ProductDetailsModel model = ProductDetailsModel();
   ProductList product = ProductList();
@@ -39,8 +41,9 @@ class _ProductDetailsState extends State<ProductDetails> {
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+    isSignedIn = await _sharedPrefManager.iSignedIn();
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(allProducts, data: {
@@ -54,6 +57,7 @@ class _ProductDetailsState extends State<ProductDetails> {
       if (parsed["status"] == "success") {
         model = ProductDetailsModel.fromJson(parsed);
         product = model.productList[0];
+        isWishListed = product.wishlistStatus == "yes";
       } else {
         _showSnackBar(parsed["message"]);
       }
@@ -69,8 +73,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   void getAddorRemoveWishlist() async {
     setState(() {});
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
 
     try {
       response = await dio.post(allProducts, data: {
@@ -356,21 +361,25 @@ class _ProductDetailsState extends State<ProductDetails> {
                                               fontSize: 16.0,
                                             ),
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                                0, 8.0, 0, 2),
-                                            child: InkWell(
-                                              onTap: () {
-                                                getAddorRemoveWishlist();
-                                              },
-                                              child: Icon(
-                                                isWishListed
-                                                    ? Icons.favorite
-                                                    : Icons.favorite_border,
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ),
+                                          isSignedIn
+                                              ? Padding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                          0, 8.0, 0, 2),
+                                                  child: InkWell(
+                                                    onTap: () {
+                                                      getAddorRemoveWishlist();
+                                                    },
+                                                    child: Icon(
+                                                      isWishListed
+                                                          ? Icons.favorite
+                                                          : Icons
+                                                              .favorite_border,
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                )
+                                              : SizedBox(),
                                         ],
                                       )
                                     ],
@@ -435,8 +444,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                 itemCount: product
                                                         .features.isEmpty
                                                     ? 0
-                                                    : product.features.length -
-                                                        1,
+                                                    : product.features.length,
                                                 itemBuilder: (BuildContext ctxt,
                                                     int index) {
                                                   print(

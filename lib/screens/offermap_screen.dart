@@ -8,9 +8,11 @@ import 'package:after_layout/after_layout.dart';
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/map_model.dart';
 import 'package:afynder/screens/map_marker.dart';
+import 'package:afynder/screens/merchantprofile_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -31,6 +33,7 @@ class _OfferMapState extends State<OfferMap> {
   static const LatLng _center = const LatLng(13.0540, 80.2641);
   List<Marker> customMarkers = new List();
   Completer<GoogleMapController> _controller = Completer();
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
@@ -44,8 +47,9 @@ class _OfferMapState extends State<OfferMap> {
     setState(() {
       isLoading = true;
     });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    dio.options.headers["authorization"] = prefs.getString(authorizationKey);
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+    ;
 
     try {
       response = await dio.post(merchantLocationList, data: {
@@ -116,6 +120,7 @@ class _OfferMapState extends State<OfferMap> {
                   MerchantList merchant = merchantList[i];
                   return bottomSheet(
                       context,
+                      merchant.merchantId,
                       merchant.firstName,
                       merchant.shopCategoryName,
                       "754",
@@ -161,6 +166,7 @@ class _OfferMapState extends State<OfferMap> {
 
 Widget bottomSheet(
     BuildContext context,
+    String merchantId,
     String merchantName,
     String merchantCategory,
     String ratingCount,
@@ -205,7 +211,14 @@ Widget bottomSheet(
                   children: <Widget>[
                     InkWell(
                       onTap: () {
-                        Navigator.pushNamed(context, '/merchantdetails');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MerchantProfile(
+                              merchantId: merchantId,
+                            ),
+                          ),
+                        );
                       },
                       child: Text(
                         merchantName,
@@ -219,7 +232,14 @@ Widget bottomSheet(
                     Spacer(),
                     InkWell(
                       onTap: () {
-                        Navigator.pushNamed(context, '/merchantdetails');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MerchantProfile(
+                              merchantId: merchantId,
+                            ),
+                          ),
+                        );
                       },
                       child: Text(
                         "View Products",
