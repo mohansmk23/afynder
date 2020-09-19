@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class Dashboard extends StatefulWidget {
   static const routeName = "/dashboard";
@@ -22,6 +23,7 @@ class _DashboardState extends State<Dashboard> {
   int _currentIndex = 0;
   DateTime currentBackPressTime;
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
+  Widget profileImage;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   Future<bool> onWillPop() {
     DateTime now = DateTime.now();
@@ -59,8 +61,6 @@ class _DashboardState extends State<Dashboard> {
   }
 
   navigateToProfileOrLanding() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-
     if (await _sharedPrefManager.iSignedIn()) {
       Navigator.pushNamed(context, ProfileScreen.routeName);
     } else {
@@ -68,9 +68,31 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  getProfileImage() async {
+    if (await _sharedPrefManager.iSignedIn()) {
+      if (await _sharedPrefManager.getProfileImageUrl() != "") {
+        profileImage = Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: CircleAvatar(
+            radius: 4.0,
+            backgroundImage:
+                NetworkImage(await _sharedPrefManager.getProfileImageUrl()),
+          ),
+        );
+      } else {
+        profileImage = Icon(FontAwesome.user_circle);
+      }
+    } else {
+      profileImage = Icon(FontAwesome.user_circle);
+    }
+
+    setState(() {});
+  }
+
   @override
   void initState() {
     checkLogin();
+    getProfileImage();
     super.initState();
   }
 
@@ -84,7 +106,7 @@ class _DashboardState extends State<Dashboard> {
             onTap: () {
               navigateToProfileOrLanding();
             },
-            child: Icon(FontAwesome.user_circle)),
+            child: profileImage),
         title: Text(
           "aFynder",
           style: TextStyle(fontFamily: 'kalam'),

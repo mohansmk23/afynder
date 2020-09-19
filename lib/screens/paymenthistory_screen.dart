@@ -1,6 +1,15 @@
+import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
+import 'package:afynder/constants/connection.dart';
+import 'package:afynder/constants/sharedPrefManager.dart';
+import 'package:afynder/response_models/wallet_history_model.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:intl/intl.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class PaymentHistory extends StatefulWidget {
   @override
@@ -8,374 +17,179 @@ class PaymentHistory extends StatefulWidget {
 }
 
 class _PaymentHistoryState extends State<PaymentHistory> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  bool isLoading = true, isEmptyState = true;
+  Response response;
+  List<WalletHistory> walletHistoryList = [];
+  WalletHistoryModel model = WalletHistoryModel();
+  SharedPrefManager _sharedPrefManager = SharedPrefManager();
+  DateFormat dateFormat = DateFormat("dd-MM-yyyy HH:mm:ss");
+  DateFormat requiredDateFormat = DateFormat("dd MMMM yyyy");
+
+  void getWalletHistory() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+
+    try {
+      response = await dio.post(walletHistory,
+          data: {"apiMethod": "WalletHistory", "mobileUniqueCode": "jana1221"});
+
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        model = WalletHistoryModel.fromJson(parsed);
+        walletHistoryList = model.walletHistory.toList();
+        isEmptyState = false;
+      } else {
+        isEmptyState = true;
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      isEmptyState = true;
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(message)));
+  }
+
+  String changeDateFormat(String date) =>
+      requiredDateFormat.format(dateFormat.parse(date));
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    getWalletHistory();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.black, //change your color here
+        key: _scaffoldKey,
+        appBar: AppBar(
+          iconTheme: IconThemeData(
+            color: Colors.black, //change your color here
+          ),
+          title: Text(
+            "All Transactions",
+            style: TextStyle(color: Colors.black),
+          ),
+          backgroundColor: Colors.white,
         ),
-        title: Text(
-          "All Transactions",
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-      ),
-      body: ListView(
-        children: <Widget>[
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/404-4042710_circle-profile-picture-png-transparent-png.png"),
-                  ),
-                  title: Text("Manoj Furnitures"),
-                  subtitle: Text("August 15 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Redeem",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.red[300],
-                      ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "-",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.redAccent,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "300",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : isEmptyState
+                ? emptyState()
+                : new ListView.builder(
+                    itemCount: walletHistoryList.length,
+                    itemBuilder: (BuildContext ctxt, int index) {
+                      WalletHistory history = walletHistoryList[index];
+
+                      return historyCard(
+                          merchantName: history.newMerchantName,
+                          date: changeDateFormat(history.updatedDate),
+                          isCredit: history.action == "add",
+                          amount: history.actionAmount,
+                          merchantLogo: history.shopLogo);
+                    }));
+  }
+
+  Card historyCard(
+      {String merchantName,
+      String date,
+      bool isCredit,
+      String amount,
+      String merchantLogo}) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+        child: ListTile(
+            leading: ClipOval(
+              child: FadeInImage.memoryNetwork(
+                image: merchantLogo,
+                placeholder: kTransparentImage,
+              ),
             ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/627-6275754_chad-profile-pic-profile-photo-circle-png-transparent.png"),
+            title: Text(merchantName),
+            subtitle: Text(date),
+            trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Text(
+                      isCredit ? "Credit" : "Redeem",
+                      style: TextStyle(color: Colors.white, fontSize: 12.0),
+                    ),
                   ),
-                  title: Text("Nakoda Electronics"),
-                  subtitle: Text("August 17 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Credit",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.green[300],
+                  color: isCredit ? Colors.green[300] : Colors.red[300],
+                ),
+                SizedBox(
+                  height: 4.0,
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      isCredit ? "+" : "-",
+                      style: TextStyle(
+                          color:
+                              isCredit ? Colors.green[300] : Colors.red[300]),
+                    ),
+                    Icon(
+                      FontAwesome.rupee,
+                      color: isCredit ? Colors.green[300] : Colors.red[300],
+                      size: 18.0,
+                    ),
+                    Text(
+                      "300",
+                      style: TextStyle(
+                        color: isCredit ? Colors.green[300] : Colors.red[300],
                       ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "+",
-                            style: TextStyle(color: Colors.green),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.green,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "300",
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/75-758282_walter-circle-person-photo-in-circle-hd-png.png"),
-                  ),
-                  title: Text("Test Shop"),
-                  subtitle: Text("july 25 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Credit",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.green[300],
-                      ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "-",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.redAccent,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "30",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.getroadmap.com/wp-content/uploads/2019/01/final-1.png"),
-                  ),
-                  title: Text("Givson Musicals"),
-                  subtitle: Text("September 23 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Credit",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.green[300],
-                      ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "+",
-                            style: TextStyle(color: Colors.green),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.green,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "5000",
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/404-4042710_circle-profile-picture-png-transparent-png.png"),
-                  ),
-                  title: Text("Manoj Furnitures"),
-                  subtitle: Text("August 15 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Redeem",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.red[300],
-                      ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "-",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.redAccent,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "300",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/404-4042710_circle-profile-picture-png-transparent-png.png"),
-                  ),
-                  title: Text("Manoj Furnitures"),
-                  subtitle: Text("August 15 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Credit",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.green[300],
-                      ),
-                      SizedBox(
-                        height: 5.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "-",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.redAccent,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "300",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-          Card(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-              child: ListTile(
-                  leading: ClipOval(
-                    child: Image.network(
-                        "https://www.pngitem.com/pimgs/m/404-4042710_circle-profile-picture-png-transparent-png.png"),
-                  ),
-                  title: Text("Manoj Furnitures"),
-                  subtitle: Text("August 15 2020"),
-                  trailing: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "Credit",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                        ),
-                        color: Colors.green[300],
-                      ),
-                      SizedBox(
-                        height: 4.0,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            "-",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          Icon(
-                            FontAwesome.rupee,
-                            color: Colors.redAccent,
-                            size: 18.0,
-                          ),
-                          Text(
-                            "300",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ),
-          ),
-        ],
+                    ),
+                  ],
+                ),
+              ],
+            )),
       ),
     );
   }
+}
+
+Widget emptyState() {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Image.asset(
+          'assets/nodata.png',
+          height: 400.0,
+          width: double.maxFinite,
+        ),
+        Text("No History Found",
+            style: TextStyle(
+                color: Colors.blueGrey[800],
+                fontWeight: FontWeight.bold,
+                fontSize: 24.0)),
+        SizedBox(
+          height: 8.0,
+        ),
+        Text("Try making transactions",
+            style: TextStyle(color: Colors.blueGrey[600], fontSize: 16.0)),
+      ],
+    ),
+  );
 }

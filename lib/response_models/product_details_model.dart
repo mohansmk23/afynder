@@ -1,15 +1,27 @@
 class ProductDetailsModel {
   String status;
   String message;
+  int allCount;
+  String pageNo;
+  String pageNoMsg;
   List<ProductList> productList;
   List<SameMerchantProducts> sameMerchantProducts;
 
   ProductDetailsModel(
-      {this.status, this.message, this.productList, this.sameMerchantProducts});
+      {this.status,
+      this.message,
+      this.allCount,
+      this.pageNo,
+      this.pageNoMsg,
+      this.productList,
+      this.sameMerchantProducts});
 
   ProductDetailsModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
+    allCount = json['allCount'];
+    pageNo = json['pageNo'];
+    pageNoMsg = json['pageNoMsg'];
     if (json['productList'] != null) {
       productList = new List<ProductList>();
       json['productList'].forEach((v) {
@@ -28,6 +40,9 @@ class ProductDetailsModel {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['status'] = this.status;
     data['message'] = this.message;
+    data['allCount'] = this.allCount;
+    data['pageNo'] = this.pageNo;
+    data['pageNoMsg'] = this.pageNoMsg;
     if (this.productList != null) {
       data['productList'] = this.productList.map((v) => v.toJson()).toList();
     }
@@ -60,12 +75,19 @@ class ProductList {
   String shortDescription;
   String longDescription;
   String activeStatus;
+  String noOfRatings;
+  String avgRatings;
+  String shopeeRating;
   String wishlistStatus;
   String shopCategoryName;
   String shopLogo;
-  String merchantName;
   String shopMailId;
+  String merchantName;
+  String shopClosingTime;
+  String shopOpeningTime;
+  String shopAddress;
   String shopContactNumber;
+  String merchantCode;
   String shoplocation;
   String whatsappNumber;
   String lat;
@@ -94,12 +116,19 @@ class ProductList {
       this.shortDescription,
       this.longDescription,
       this.activeStatus,
+      this.noOfRatings,
+      this.avgRatings,
+      this.shopeeRating,
       this.wishlistStatus,
       this.shopCategoryName,
       this.shopLogo,
-      this.merchantName,
       this.shopMailId,
+      this.merchantName,
+      this.shopClosingTime,
+      this.shopOpeningTime,
+      this.shopAddress,
       this.shopContactNumber,
+      this.merchantCode,
       this.shoplocation,
       this.whatsappNumber,
       this.lat,
@@ -133,12 +162,19 @@ class ProductList {
     shortDescription = json['shortDescription'];
     longDescription = json['longDescription'];
     activeStatus = json['activeStatus'];
+    noOfRatings = json['noOfRatings'];
+    avgRatings = json['avgRatings'];
+    shopeeRating = json['shopeeRating'];
     wishlistStatus = json['wishlistStatus'];
     shopCategoryName = json['shopCategoryName'];
     shopLogo = json['shopLogo'];
-    merchantName = json['merchantName'];
     shopMailId = json['shopMailId'];
+    merchantName = json['merchantName'];
+    shopClosingTime = json['shopClosingTime'];
+    shopOpeningTime = json['shopOpeningTime'];
+    shopAddress = json['shopAddress'];
     shopContactNumber = json['shopContactNumber'];
+    merchantCode = json['merchantCode'];
     shoplocation = json['shoplocation'];
     whatsappNumber = json['whatsappNumber'];
     lat = json['Lat'];
@@ -172,12 +208,19 @@ class ProductList {
     data['shortDescription'] = this.shortDescription;
     data['longDescription'] = this.longDescription;
     data['activeStatus'] = this.activeStatus;
+    data['noOfRatings'] = this.noOfRatings;
+    data['avgRatings'] = this.avgRatings;
+    data['shopeeRating'] = this.shopeeRating;
     data['wishlistStatus'] = this.wishlistStatus;
     data['shopCategoryName'] = this.shopCategoryName;
     data['shopLogo'] = this.shopLogo;
-    data['merchantName'] = this.merchantName;
     data['shopMailId'] = this.shopMailId;
+    data['merchantName'] = this.merchantName;
+    data['shopClosingTime'] = this.shopClosingTime;
+    data['shopOpeningTime'] = this.shopOpeningTime;
+    data['shopAddress'] = this.shopAddress;
     data['shopContactNumber'] = this.shopContactNumber;
+    data['merchantCode'] = this.merchantCode;
     data['shoplocation'] = this.shoplocation;
     data['whatsappNumber'] = this.whatsappNumber;
     data['Lat'] = this.lat;
@@ -230,10 +273,17 @@ class SameMerchantProducts {
   String activeStatus;
   String shopCategoryName;
   String wishlistStatus;
+  String noOfRatings;
+  String avgRatings;
+  String shopeeRating;
   String shopLogo;
-  String merchantName;
   String shopMailId;
+  String merchantName;
+  String shopClosingTime;
+  String shopOpeningTime;
+  String shopAddress;
   String shopContactNumber;
+  String merchantCode;
   String shoplocation;
   String whatsappNumber;
   String lat;
@@ -264,10 +314,17 @@ class SameMerchantProducts {
       this.activeStatus,
       this.shopCategoryName,
       this.wishlistStatus,
+      this.noOfRatings,
+      this.avgRatings,
+      this.shopeeRating,
       this.shopLogo,
-      this.merchantName,
       this.shopMailId,
+      this.merchantName,
+      this.shopClosingTime,
+      this.shopOpeningTime,
+      this.shopAddress,
       this.shopContactNumber,
+      this.merchantCode,
       this.shoplocation,
       this.whatsappNumber,
       this.lat,
@@ -298,10 +355,17 @@ class SameMerchantProducts {
     activeStatus = json['activeStatus'];
     shopCategoryName = json['shopCategoryName'];
     wishlistStatus = json['wishlistStatus'];
+    noOfRatings = json['noOfRatings'];
+    avgRatings = json['avgRatings'];
+    shopeeRating = json['shopeeRating'];
     shopLogo = json['shopLogo'];
-    merchantName = json['merchantName'];
     shopMailId = json['shopMailId'];
+    merchantName = json['merchantName'];
+    shopClosingTime = json['shopClosingTime'];
+    shopOpeningTime = json['shopOpeningTime'];
+    shopAddress = json['shopAddress'];
     shopContactNumber = json['shopContactNumber'];
+    merchantCode = json['merchantCode'];
     shoplocation = json['shoplocation'];
     whatsappNumber = json['whatsappNumber'];
     lat = json['Lat'];
@@ -334,10 +398,17 @@ class SameMerchantProducts {
     data['activeStatus'] = this.activeStatus;
     data['shopCategoryName'] = this.shopCategoryName;
     data['wishlistStatus'] = this.wishlistStatus;
+    data['noOfRatings'] = this.noOfRatings;
+    data['avgRatings'] = this.avgRatings;
+    data['shopeeRating'] = this.shopeeRating;
     data['shopLogo'] = this.shopLogo;
-    data['merchantName'] = this.merchantName;
     data['shopMailId'] = this.shopMailId;
+    data['merchantName'] = this.merchantName;
+    data['shopClosingTime'] = this.shopClosingTime;
+    data['shopOpeningTime'] = this.shopOpeningTime;
+    data['shopAddress'] = this.shopAddress;
     data['shopContactNumber'] = this.shopContactNumber;
+    data['merchantCode'] = this.merchantCode;
     data['shoplocation'] = this.shoplocation;
     data['whatsappNumber'] = this.whatsappNumber;
     data['Lat'] = this.lat;

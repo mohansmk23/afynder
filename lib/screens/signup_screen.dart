@@ -51,6 +51,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         prefs.setString(firstNameKey, fName);
         prefs.setString(lastNameKey, lName);
         prefs.setString(mailIdKey, email);
+        prefs.setString(shopeeId, parsed["shopeeId"]);
         prefs.setBool(isSignnedIn, true);
         prefs.setString(authorizationKey, parsed['authKey']);
         SchedulerBinding.instance.addPostFrameCallback((_) {

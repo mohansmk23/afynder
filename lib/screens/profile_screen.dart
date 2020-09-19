@@ -1,19 +1,25 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/merchant_details.dart';
 import 'package:afynder/response_models/profile_info.dart';
 import 'package:afynder/screens/dashboard_screen.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'categories_screen.dart' as categoriesscreen;
 
 class ProfileScreen extends StatefulWidget {
   static const String routeName = '/profile';
@@ -22,9 +28,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _status = true;
+  bool _status = true, isImagePicked = false;
+  File _image;
   final FocusNode myFocusNode = FocusNode();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  String fName, lName, email, mobile, password;
   bool isLoading = true;
   Response response;
   ProfileModel model = new ProfileModel();
@@ -33,6 +41,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController lNameController = new TextEditingController();
   TextEditingController emailIdController = new TextEditingController();
   TextEditingController mobileNoController = new TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  void open_gallery() async {
+    _image = await ImagePicker.pickImage(source: ImageSource.gallery);
+
+    _image = await ImageCropper.cropImage(sourcePath: _image.path);
+
+    setState(() {
+      print("done");
+      isImagePicked = true;
+      updateProfileInfo();
+    });
+  }
+
+  Widget getProfileImage() {
+    if (isImagePicked && _image != null) {
+      return Image.file(
+        _image,
+        fit: BoxFit.fill,
+      );
+    } else {
+      return model.shopeeDetails.profileImage == null
+          ? Placeholder()
+          : FadeInImage.memoryNetwork(
+              image: model.shopeeDetails.profileImage,
+              placeholder: kTransparentImage,
+              fadeInDuration: Duration(seconds: 1),
+              fit: BoxFit.fill,
+            );
+    }
+  }
+
+  Future<void> updateProfileInfo() async {
+    print("darkhorse");
+    setState(() {
+      isLoading = true;
+    });
+
+    FormData formData = FormData.fromMap({
+      "apiMethod": "profileUpdate",
+      "firstName": fNameController.text,
+      "lastName": lNameController.text,
+      "contactNumber": mobileNoController.text,
+      "emailId": emailIdController.text,
+      "profileImage":
+          await MultipartFile.fromFile(_image.path, filename: "image.jpg")
+    });
+
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+
+    try {
+      response = await dio.post(updateProfile, data: formData);
+
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        _status = true;
+      } else {
+        _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   void getProfileDetails() async {
     setState(() {
@@ -121,6 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           leading: InkWell(
             onTap: () {
@@ -180,48 +259,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               width: 140.0,
                                               height: 140.0,
                                               child: ClipOval(
-                                                child: model.shopeeDetails
-                                                            .profileImage ==
-                                                        null
-                                                    ? Placeholder()
-                                                    : FadeInImage.memoryNetwork(
-                                                        image: model
-                                                            .shopeeDetails
-                                                            .profileImage,
-                                                        placeholder:
-                                                            kTransparentImage,
-                                                        fadeInDuration:
-                                                            Duration(
-                                                                seconds: 1),
-                                                        fit: BoxFit.fill,
-                                                      ),
-                                              ),
+                                                  child: getProfileImage()),
                                               decoration: new BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 color: Colors.blue,
                                               )),
                                         ],
                                       ),
-                                      Visibility(
-                                        visible: !_status,
-                                        child: Padding(
-                                            padding: EdgeInsets.only(
-                                                top: 90.0, right: 100.0),
-                                            child: new Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: <Widget>[
-                                                new CircleAvatar(
+                                      Padding(
+                                          padding: EdgeInsets.only(
+                                              top: 90.0, right: 100.0),
+                                          child: new Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: <Widget>[
+                                              InkWell(
+                                                onTap: () {
+                                                  open_gallery();
+                                                },
+                                                child: CircleAvatar(
                                                   backgroundColor: Colors.red,
                                                   radius: 25.0,
                                                   child: new Icon(
                                                     Icons.camera_alt,
                                                     color: Colors.white,
                                                   ),
-                                                )
-                                              ],
-                                            )),
-                                      ),
+                                                ),
+                                              )
+                                            ],
+                                          )),
                                     ]),
                               )
                             ],
@@ -277,7 +343,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Container(
                                 child: InkWell(
                                   onTap: () {
-                                    Navigator.pushNamed(context, '/wishlist');
+                                    Navigator.pushNamed(context, '/wishlist')
+                                        .then((flag) {
+                                      if (flag) {
+                                        getProfileDetails();
+                                      }
+                                    });
                                   },
                                   child: Card(
                                     child: Padding(
@@ -426,6 +497,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             trailing: Icon(Icons.chevron_right),
                           ),
                         ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      categoriesscreen.Categories(
+                                    fromScreen: "profile",
+                                  ),
+                                ));
+                          },
+                          child: ListTile(
+                            leading: Icon(
+                              FontAwesome.filter,
+                              color: Colors.indigoAccent,
+                            ),
+                            title: Text("Category Selection"),
+                            trailing: Icon(Icons.chevron_right),
+                          ),
+                        ),
                         Container(
                           color: Color(0xffFFFFFF),
                           child: Padding(
@@ -452,22 +543,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         _status ? _getEditIcon() : SizedBox()
                                       ],
                                     )),
-                                profileTextField(
-                                    hint: "First Name",
-                                    controller: fNameController,
-                                    validator: () {}),
-                                profileTextField(
-                                    hint: "Last Name",
-                                    controller: lNameController,
-                                    validator: () {}),
-                                profileTextField(
-                                    hint: "E-Mail",
-                                    controller: emailIdController,
-                                    validator: () {}),
-                                profileTextField(
-                                    hint: "Mobile",
-                                    controller: mobileNoController,
-                                    validator: () {}),
+                                Form(
+                                  key: _formKey,
+                                  child: Column(
+                                    children: <Widget>[
+                                      profileTextField(
+                                        hint: "First Name",
+                                        controller: fNameController,
+                                        keyboardType: TextInputType.text,
+                                        validator: (value) {
+                                          if (value.isEmpty) {
+                                            print("working");
+                                            return 'Please enter first name';
+                                          } else {
+                                            print("not");
+                                            fName = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      profileTextField(
+                                        hint: "Last Name",
+                                        controller: lNameController,
+                                        keyboardType: TextInputType.text,
+                                        validator: (value) {
+                                          if (value.isEmpty) {
+                                            return 'Please enter last name';
+                                          } else {
+                                            lName = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      profileTextField(
+                                        hint: "E-Mail",
+                                        controller: emailIdController,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                        validator: (value) {
+                                          if (!RegExp(
+                                                  r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
+                                              .hasMatch(value)) {
+                                            return 'Please enter valid email';
+                                          } else {
+                                            email = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      profileTextField(
+                                        hint: "Mobile",
+                                        keyboardType: TextInputType.number,
+                                        controller: mobileNoController,
+                                        validator: (value) {
+                                          if (value.length != 10) {
+                                            return 'Please enter valid mobile number';
+                                          } else {
+                                            mobile = value;
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 !_status
                                     ? _getActionButtons()
                                     : new Container(),
@@ -483,7 +622,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Column profileTextField(
-      {String hint, TextEditingController controller, Function validator}) {
+      {String hint,
+      TextEditingController controller,
+      Function validator,
+      TextInputType keyboardType}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -495,8 +637,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             )),
         Padding(
             padding: EdgeInsets.only(left: 25.0, right: 25.0, top: 2.0),
-            child: new TextField(
+            child: new TextFormField(
               controller: controller,
+              validator: validator,
+              keyboardType: keyboardType,
               decoration: const InputDecoration(
                 hintText: "",
               ),
@@ -531,7 +675,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.green,
                 onPressed: () {
                   setState(() {
-                    _status = true;
+                    if (_formKey.currentState.validate()) {
+                      updateProfileInfo();
+                    }
+
+                    // _status = true;
                     FocusScope.of(context).requestFocus(new FocusNode());
                   });
                 },

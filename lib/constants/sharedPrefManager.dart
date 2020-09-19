@@ -7,6 +7,16 @@ class SharedPrefManager {
         .then((value) => value.getString(authorizationKey) ?? guestAuth);
   }
 
+  Future<String> getShopeeId() async {
+    return SharedPreferences.getInstance()
+        .then((value) => value.getString(shopeeId) ?? "");
+  }
+
+  Future<String> getProfileImageUrl() async {
+    return SharedPreferences.getInstance()
+        .then((value) => value.getString(profileImage) ?? "");
+  }
+
   signOutUser() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     await pref.clear();

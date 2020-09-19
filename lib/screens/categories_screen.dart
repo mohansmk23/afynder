@@ -18,6 +18,11 @@ import 'package:afynder/constants/api_urls.dart';
 
 class Categories extends StatefulWidget {
   static const routeName = "/categories";
+
+  final String fromScreen;
+
+  const Categories({this.fromScreen});
+
   @override
   _CategoriesState createState() => _CategoriesState();
 }
@@ -35,9 +40,14 @@ class _CategoriesState extends State<Categories> {
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
+    String shopeeId = await _sharedPrefManager.getShopeeId();
+
     try {
-      response = await dio.post(fetchCategories,
-          data: {"apiMethod": "CategoryList", "mobileUniqueCode": "jana1221"});
+      response = await dio.post(fetchCategories, data: {
+        "apiMethod": "CategoryList",
+        "shopeeId": shopeeId,
+        "mobileUniqueCode": "jana1221"
+      });
       print(response);
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
@@ -71,10 +81,14 @@ class _CategoriesState extends State<Categories> {
 
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-              Dashboard.routeName, (Route<dynamic> route) => false);
-        });
+        if (widget.fromScreen == "profile") {
+          Navigator.pop(context);
+        } else {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                Dashboard.routeName, (Route<dynamic> route) => false);
+          });
+        }
       } else {
         _showSnackBar(parsed["message"]);
       }
@@ -172,21 +186,23 @@ class _CategoriesState extends State<Categories> {
                       onPressed: () {
                         //Navigator.pushNamed(context, '/dashboard');
 
-                        final CategorySelectionModel selectionParams =
-                            new CategorySelectionModel();
+                        if (selectedCount != 0) {
+                          final CategorySelectionModel selectionParams =
+                              new CategorySelectionModel();
+                          List<SelectedCategories> categorySelection = [];
+                          for (CategoryList category in categoryList) {
+                            categorySelection.add(SelectedCategories(
+                                categoryId: category.categoryId,
+                                isSelected: category.isSelected));
+                          }
+                          selectionParams.apiMethod = 'CategorySelection';
+                          selectionParams.mobileUniqueCode = mobileUniqueCode;
+                          selectionParams.categories = categorySelection;
 
-                        List<SelectedCategories> categorySelection = [];
-                        for (CategoryList category in categoryList) {
-                          categorySelection.add(SelectedCategories(
-                              categoryId: category.categoryId,
-                              isSelected: category.isSelected));
+                          postCategories(selectionParams);
+                        } else {
+                          _showSnackBar("Please Select Atleast one Category");
                         }
-
-                        selectionParams.apiMethod = 'CategorySelection';
-                        selectionParams.mobileUniqueCode = mobileUniqueCode;
-                        selectionParams.categories = categorySelection;
-
-                        postCategories(selectionParams);
                       },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),

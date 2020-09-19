@@ -49,6 +49,8 @@ class _SigninScreenState extends State<SigninScreen> {
         prefs.setString(lastNameKey, model.shoppeInformations.lastName);
         prefs.setString(mailIdKey, model.shoppeInformations.mailId);
         prefs.setString(authorizationKey, model.shoppeInformations.authKey);
+        prefs.setString(shopeeId, model.shoppeInformations.shopeeId);
+        prefs.setString(profileImage, model.shoppeInformations.profileImage);
         prefs.setBool(isSignnedIn, true);
         SchedulerBinding.instance.addPostFrameCallback((_) {
           Navigator.of(context).pushNamedAndRemoveUntil(

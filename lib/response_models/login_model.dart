@@ -26,6 +26,7 @@ class LoginModel {
 
 class ShoppeInformations {
   String id;
+  String shopeeId;
   String firstName;
   String mailId;
   String lastName;
@@ -34,6 +35,7 @@ class ShoppeInformations {
 
   ShoppeInformations(
       {this.id,
+      this.shopeeId,
       this.firstName,
       this.mailId,
       this.lastName,
@@ -42,6 +44,7 @@ class ShoppeInformations {
 
   ShoppeInformations.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    shopeeId = json['shopeeId'];
     firstName = json['firstName'];
     mailId = json['mailId'];
     lastName = json['lastName'];
@@ -52,6 +55,7 @@ class ShoppeInformations {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
+    data['shopeeId'] = this.shopeeId;
     data['firstName'] = this.firstName;
     data['mailId'] = this.mailId;
     data['lastName'] = this.lastName;

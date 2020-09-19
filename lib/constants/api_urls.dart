@@ -6,3 +6,7 @@ const String homeScreen = "/feature-product-mgnt";
 const String allProducts = "/shopee-product-mgnt";
 const String merchantLocationList = "/shopee-merchant-list";
 const String profileInfo = "/shopee-profile";
+const String walletHistory = "/shopee-wallet-history";
+const String updateProfile = "/shopee-profile-upload";
+const String wishListmgmt = "/shopee-product-mgnt";
+const String rateTheProduct = "/shopee-product-mgnt";

@@ -11,6 +11,7 @@ import 'package:afynder/screens/filter_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -47,10 +48,9 @@ class _NearMeState extends State<NearMe> {
         final AllProducts model = AllProducts.fromJson(parsed);
         productList = model.productList.toList();
         isEmptyState = false;
-        _showSnackBar(parsed["message"]);
       } else {
         isEmptyState = true;
-        _showSnackBar(parsed["message"]);
+        //_showSnackBar(parsed["message"]);
       }
     } catch (e) {
       isEmptyState = true;
@@ -72,26 +72,53 @@ class _NearMeState extends State<NearMe> {
     List<Widget> chips = [];
 
     for (Categories category in requestModel.categories) {
-      chips.add(filterChipWidget(category.categoryName));
+      chips.add(filterChipWidget(category.categoryName,
+          Icon(AntDesign.filter, size: 16.0, color: Colors.white)));
     }
 
     if (requestModel.sorting.isNotEmpty) {
-      chips.add(filterChipWidget(requestModel.sorting == "priceAsc"
-          ? "Price Low to High"
-          : "Price High to Low"));
+      chips.add(filterChipWidget(
+          requestModel.sorting == "priceAsc"
+              ? "Price Low to High"
+              : "Price High to Low",
+          Icon(
+            Entypo.price_tag,
+            size: 16.0,
+            color: Colors.white,
+          )));
     }
 
-    chips.add(filterChipWidget(
-        "Price ${requestModel.priceFrom} - ${requestModel.priceTo}"));
+    if (requestModel.priceFrom != "") {
+      chips.add(filterChipWidget(
+          "Price ${requestModel.priceFrom} - ${requestModel.priceTo}",
+          Icon(
+            Entypo.price_tag,
+            size: 16.0,
+            color: Colors.white,
+          )));
+    }
 
     return chips;
   }
 
-  Widget filterChipWidget(String txt) {
+  Widget filterChipWidget(String txt, Icon icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 4.0),
       child: Chip(
-        label: Text(txt),
+        backgroundColor: Colors.indigo,
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            icon,
+            SizedBox(
+              width: 6.0,
+            ),
+            Text(
+              txt,
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -150,7 +177,9 @@ class _NearMeState extends State<NearMe> {
                                 filterParams = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => FilterScreen(),
+                                      builder: (context) => FilterScreen(
+                                        filterSelection: requestModel,
+                                      ),
                                     ));
 
                                 setState(() {
@@ -322,7 +351,8 @@ class NearbyItem extends StatelessWidget {
                                 "$offerPercent% OFF",
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                                    color: Colors.white,
+                                    fontSize: 12.0),
                               ),
                             ),
                             color: ThemeColors.themeOrange,
@@ -396,21 +426,23 @@ class NearbyItem extends StatelessWidget {
 Widget emptyState() {
   return Center(
     child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Image.asset('assets/nodata.png'),
+        Image.asset(
+          'assets/nodata.png',
+          height: 400.0,
+          width: double.maxFinite,
+        ),
         Text("No Products Found",
             style: TextStyle(
                 color: Colors.blueGrey[800],
                 fontWeight: FontWeight.bold,
-                fontSize: 18.0)),
+                fontSize: 24.0)),
         SizedBox(
           height: 8.0,
         ),
-        Text("Try changing filter optons",
-            style: TextStyle(
-                color: Colors.blueGrey[600],
-                fontWeight: FontWeight.bold,
-                fontSize: 12.0)),
+        Text("Try Changing Filter Options",
+            style: TextStyle(color: Colors.blueGrey[600], fontSize: 16.0)),
       ],
     ),
   );

@@ -72,7 +72,7 @@ class _LandingScreenState extends State<LandingScreen>
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           Expanded(
-            flex: 8,
+            flex: 10,
             child: Stack(fit: StackFit.expand, children: <Widget>[
               PageView(
                 controller: _pageController,
@@ -179,39 +179,42 @@ class _LandingScreenState extends State<LandingScreen>
             flex: 4,
             child: Container(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6.0, horizontal: 20.0),
-                        child: SocialMediaButton(
-                          text: "Sign-in with Google",
-                          prefixIcon: Icon(
-                            FontAwesome.google,
-                            color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18.0, vertical: 0),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: SocialMediaButton(
+                            text: "Google",
+                            prefixIcon: Icon(
+                              FontAwesome.google,
+                              color: Colors.white,
+                            ),
+                            buttonColor: Colors.blueAccent,
+                            onTap: () {
+                              _googleSignIn.signIn();
+                            },
                           ),
-                          buttonColor: Colors.blueAccent,
-                          onTap: () {
-                            _googleSignIn.signIn();
-                          },
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6.0, horizontal: 20.0),
-                        child: SocialMediaButton(
-                          text: "Sign-in with Facebook",
-                          prefixIcon: Icon(
-                            FontAwesome.facebook,
-                            color: Colors.white,
+                        SizedBox(
+                          width: 16.0,
+                        ),
+                        Expanded(
+                          child: SocialMediaButton(
+                            text: "Facebook",
+                            prefixIcon: Icon(
+                              FontAwesome.facebook,
+                              color: Colors.white,
+                            ),
+                            buttonColor: Colors.blue[800],
+                            onTap: () {},
                           ),
-                          buttonColor: Colors.blue[800],
-                          onTap: () {},
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   Padding(
                     padding:
@@ -270,7 +273,21 @@ class _LandingScreenState extends State<LandingScreen>
                   ),
                   SizedBox(
                     height: 4.0,
-                  )
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Skip Sign in Now",
+                      style: TextStyle(
+                          color: Colors.black,
+                          decoration: TextDecoration.underline),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 4.0,
+                  ),
                 ],
               ),
             ),
@@ -293,7 +310,6 @@ class SocialMediaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
       child: Padding(
         padding: EdgeInsets.all(0),
         child: RaisedButton(

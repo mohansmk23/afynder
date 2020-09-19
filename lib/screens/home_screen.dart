@@ -83,42 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ListView(
                 padding: EdgeInsets.only(bottom: 48.0),
                 children: <Widget>[
-                  Container(
-                    color: ThemeColors.themeOrange,
-                    width: double.infinity,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "LOCATION",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.0),
-                          ),
-                          SizedBox(
-                            height: 4.0,
-                          ),
-                          Row(
-                            children: <Widget>[
-                              Text(
-                                "Royapettah ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.white,
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
                   SizedBox(
                     height: 16.0,
                   ),
