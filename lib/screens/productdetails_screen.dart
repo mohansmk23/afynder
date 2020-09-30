@@ -38,6 +38,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   ProductDetailsModel model = ProductDetailsModel();
   ProductList product = ProductList();
   String rating;
+  bool isConnectClicked = false;
 
   void getProductDetails() async {
     setState(() {
@@ -155,43 +156,95 @@ class _ProductDetailsState extends State<ProductDetails> {
       child: Scaffold(
         key: _scaffoldKey,
         extendBodyBehindAppBar: true,
-        floatingActionButton: SpeedDial(
-          // both default to 16
-          marginRight: 18,
-          marginBottom: 20,
-          animatedIcon: AnimatedIcons.menu_close,
-          animatedIconTheme: IconThemeData(size: 22.0, color: Colors.white),
-          closeManually: false,
-          curve: Curves.bounceIn,
-          overlayColor: Colors.black,
-          overlayOpacity: 0.5,
-          backgroundColor: ThemeColors.themeOrange,
-          foregroundColor: Colors.black,
-          elevation: 8.0,
-          shape: CircleBorder(),
-          children: [
-            SpeedDialChild(
-              child: Icon(FontAwesome.whatsapp),
-              backgroundColor: Colors.green,
-              label: 'WhatsApp',
-              labelStyle: TextStyle(fontSize: 18.0),
-              onTap: () => print('THIRD CHILD'),
-            ),
-            SpeedDialChild(
-              child: Icon(Icons.email),
-              backgroundColor: Colors.blue,
-              label: 'Mail',
-              labelStyle: TextStyle(fontSize: 18.0),
-              onTap: () => print('SECOND CHILD'),
-            ),
-            SpeedDialChild(
-                child: Icon(Icons.phone),
-                backgroundColor: Colors.red,
-                label: 'Call',
-                labelStyle: TextStyle(fontSize: 18.0),
-                onTap: () => print('FIRST CHILD')),
-          ],
+        floatingActionButton: Container(
+          child: Stack(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: AnimatedContainer(
+                  curve: Curves.easeInOutQuint,
+                  height: isConnectClicked ? 0.0 : 35.0,
+                  width: isConnectClicked ? 0.0 : 140.0,
+                  duration: Duration(milliseconds: 200),
+                  child: RaisedButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18.0),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isConnectClicked = !isConnectClicked;
+                      });
+                    },
+                    color: ThemeColors.themeOrange,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(
+                        "Interested?",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    AnimatedContainer(
+                      curve: Curves.easeInOutQuint,
+                      height: isConnectClicked ? 50.0 : 0.0,
+                      width: isConnectClicked ? 50.0 : 0.0,
+                      duration: Duration(milliseconds: 200),
+                      child: FloatingActionButton(
+                        heroTag: "o",
+                        child: isConnectClicked ? Icon(Icons.call) : SizedBox(),
+                        onPressed: () {},
+                      ),
+                    ),
+                    AnimatedContainer(
+                      width: isConnectClicked ? 70.0 : 0.0,
+                      height: 0.0,
+                      duration: Duration(milliseconds: 200),
+                    ),
+                    AnimatedContainer(
+                      curve: Curves.easeInOutQuint,
+                      height: isConnectClicked ? 50.0 : 0.0,
+                      width: isConnectClicked ? 50.0 : 0.0,
+                      duration: Duration(milliseconds: 200),
+                      child: FloatingActionButton(
+                        heroTag: "1",
+                        backgroundColor: Colors.indigo,
+                        child: isConnectClicked ? Icon(Icons.mail) : SizedBox(),
+                        onPressed: () {},
+                      ),
+                    ),
+                    AnimatedContainer(
+                      width: isConnectClicked ? 70.0 : 0.0,
+                      height: 0.0,
+                      duration: Duration(milliseconds: 200),
+                    ),
+                    AnimatedContainer(
+                      curve: Curves.easeInOutQuint,
+                      height: isConnectClicked ? 50.0 : 0.0,
+                      width: isConnectClicked ? 50.0 : 0.0,
+                      duration: Duration(milliseconds: 200),
+                      child: FloatingActionButton(
+                        heroTag: "2",
+                        backgroundColor: Colors.green,
+                        child: isConnectClicked
+                            ? Icon(Icons.directions)
+                            : SizedBox(),
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           title: Text(""),
@@ -250,7 +303,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                               PageView.builder(
                                 physics: BouncingScrollPhysics(),
                                 controller: controller,
-                                itemCount: product.productImages.length,
+                                itemCount: product.productImages.length ?? 0,
                                 itemBuilder: (BuildContext context, int index) {
                                   return FadeInImage.memoryNetwork(
                                     placeholder: kTransparentImage,
@@ -434,36 +487,39 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     ),
                                   ),
                                 ),
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          "Description",
-                                          textAlign: TextAlign.start,
-                                          style: TextStyle(
+                                SizedBox(
+                                  width: double.maxFinite,
+                                  child: Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            "Description",
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                                color: ThemeColors.themeColor5,
+                                                fontSize: 14.0,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          SizedBox(
+                                            height: 8.0,
+                                          ),
+                                          Text(
+                                            product.shortDescription,
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
                                               color: ThemeColors.themeColor5,
                                               fontSize: 14.0,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        SizedBox(
-                                          height: 8.0,
-                                        ),
-                                        Text(
-                                          product.shortDescription,
-                                          textAlign: TextAlign.start,
-                                          style: TextStyle(
-                                            color: ThemeColors.themeColor5,
-                                            fontSize: 14.0,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(
-                                          height: 8.0,
-                                        ),
-                                      ],
+                                          SizedBox(
+                                            height: 8.0,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -818,6 +874,19 @@ class _ProductDetailsState extends State<ProductDetails> {
                       ],
                     ),
                   ),
+                  Visibility(
+                    visible: isConnectClicked,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isConnectClicked = false;
+                        });
+                      },
+                      child: Container(
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                    ),
+                  )
                 ],
               ),
       ),

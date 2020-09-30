@@ -36,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = true;
   Response response;
   ProfileModel model = new ProfileModel();
+  final _controller = ScrollController();
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
   TextEditingController fNameController = new TextEditingController();
   TextEditingController lNameController = new TextEditingController();
@@ -237,6 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : new Container(
                 color: Colors.white,
                 child: new ListView(
+                  controller: _controller,
                   children: <Widget>[
                     Column(
                       children: <Widget>[
@@ -729,6 +731,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _status = false;
         });
+        _controller.animateTo(
+          _controller.position.maxScrollExtent + 100.0,
+          duration: Duration(seconds: 1),
+          curve: Curves.fastOutSlowIn,
+        );
       },
     );
   }

@@ -72,11 +72,13 @@ class _NearMeState extends State<NearMe> {
     List<Widget> chips = [];
 
     for (Categories category in requestModel.categories) {
+      print("${chips.length}  for");
       chips.add(filterChipWidget(category.categoryName,
           Icon(AntDesign.filter, size: 16.0, color: Colors.white)));
     }
 
-    if (requestModel.sorting.isNotEmpty) {
+    if (requestModel.sorting != "") {
+      print("${chips.length}  sort");
       chips.add(filterChipWidget(
           requestModel.sorting == "priceAsc"
               ? "Price Low to High"
@@ -89,6 +91,7 @@ class _NearMeState extends State<NearMe> {
     }
 
     if (requestModel.priceFrom != "") {
+      print("${chips.length}  range");
       chips.add(filterChipWidget(
           "Price ${requestModel.priceFrom} - ${requestModel.priceTo}",
           Icon(
@@ -97,6 +100,49 @@ class _NearMeState extends State<NearMe> {
             color: Colors.white,
           )));
     }
+
+    if (chips.length > 0) {
+      print("${chips.length}  clear");
+      chips.insert(
+          0,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 4.0),
+            child: InkWell(
+              onTap: () {
+                requestModel.apiMethod = "productList";
+                requestModel.productId = "";
+                requestModel.searchString = "";
+                requestModel.categories = [];
+                requestModel.priceTo = "";
+                requestModel.priceFrom = "";
+                requestModel.sorting = "";
+                isFiltered = false;
+                getAllProducts();
+              },
+              child: Chip(
+                backgroundColor: Colors.indigo,
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      "Clear Filters",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    SizedBox(
+                      width: 6.0,
+                    ),
+                    Icon(
+                      FontAwesome.times_circle,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ));
+    }
+
+    print("${chips.length}  csk");
 
     return chips;
   }
@@ -129,6 +175,10 @@ class _NearMeState extends State<NearMe> {
     requestModel.productId = "";
     requestModel.searchString = "";
     requestModel.categories = [];
+    requestModel.priceTo = "";
+    requestModel.priceFrom = "";
+    requestModel.sorting = "";
+    isFiltered = false;
     getAllProducts();
     super.initState();
   }
@@ -145,8 +195,12 @@ class _NearMeState extends State<NearMe> {
               child: ListView(
                 children: <Widget>[
                   Container(
+                    height: getFilteredChips().length == 0 ? 0.0 : 50.0,
                     color: Colors.grey[200],
-                    child: Wrap(
+                    child: ListView(
+                      shrinkWrap: true,
+                      physics: ClampingScrollPhysics(),
+                      scrollDirection: Axis.horizontal,
                       children: isFiltered ? getFilteredChips() : [SizedBox()],
                     ),
                   ),
@@ -201,47 +255,31 @@ class _NearMeState extends State<NearMe> {
                   ),
                   isEmptyState
                       ? emptyState()
-                      : ListView(
-                          physics: ClampingScrollPhysics(),
-                          shrinkWrap: true,
-                          padding: EdgeInsets.fromLTRB(12.0, 0, 12.0, 36.0),
-                          children: <Widget>[
-                            SizedBox(
-                              height: 12.0,
-                            ),
-                            GridView.builder(
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 5.0,
-                                  mainAxisSpacing: 5.0,
-                                ),
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                scrollDirection: Axis.vertical,
-                                // crossAxisCount: 2,
-                                itemCount: productList.isEmpty
-                                    ? 0
-                                    : productList.length,
-                                itemBuilder: (context, index) => NearbyItem(
-                                      imagePath:
-                                          productList[index].productImages[0],
-                                      productName:
-                                          productList[index].productName,
-                                      isOffer:
-                                          productList[index].isOffer == "yes",
-                                      isFeatured:
-                                          productList[index].isFeature == "yes",
-                                      actualPrice:
-                                          productList[index].actualAmount,
-                                      price: productList[index].sellingAmount,
-                                      offerPercent:
-                                          productList[index].offerAmount,
-                                      category:
-                                          productList[index].shopCategoryName,
-                                      productId: productList[index].productId,
-                                    )),
-                          ],
+                      : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ListView.builder(
+                              padding: EdgeInsets.only(bottom: 80.0),
+                              shrinkWrap: true,
+                              physics: ClampingScrollPhysics(),
+                              itemCount:
+                                  productList.isEmpty ? 0 : productList.length,
+                              itemBuilder: (context, index) => AllProductsItem(
+                                    imagePath:
+                                        productList[index].productImages[0],
+                                    productName: productList[index].productName,
+                                    isOffer:
+                                        productList[index].isOffer == "yes",
+                                    isFeatured:
+                                        productList[index].isFeature == "yes",
+                                    actualPrice:
+                                        productList[index].actualAmount,
+                                    price: productList[index].sellingAmount,
+                                    offerPercent:
+                                        productList[index].offerAmount,
+                                    categoryName:
+                                        productList[index].shopCategoryName,
+                                    productId: productList[index].productId,
+                                  )),
                         ),
                 ],
               ),
@@ -300,7 +338,7 @@ class NearbyItem extends StatelessWidget {
                         image: imagePath,
                         placeholder: kTransparentImage,
                         width: double.infinity,
-                        height: 150,
+                        height: 160,
                         fit: BoxFit.fill,
                       ),
                       Visibility(
@@ -367,16 +405,18 @@ class NearbyItem extends StatelessWidget {
                       children: <Widget>[
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.max,
                           children: <Widget>[
                             Text(
-                              category,
+                              productName,
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: 10.0,
+                                fontSize: 14.0,
                               ),
                             ),
                             Text(
-                              productName,
+                              category,
                               style: TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12.0,
@@ -393,7 +433,8 @@ class NearbyItem extends StatelessWidget {
                                     "Rs.$actualPrice",
                                     style: TextStyle(
                                       color: Colors.grey,
-                                      fontSize: 10.0,
+                                      fontSize: 12.0,
+                                      fontWeight: FontWeight.w700,
                                       decoration: TextDecoration.lineThrough,
                                     ),
                                   )
@@ -401,8 +442,9 @@ class NearbyItem extends StatelessWidget {
                             Text(
                               "Rs.$price",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12.0,
+                                color: Colors.grey[800],
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.0,
                               ),
                             ),
                           ],
@@ -446,4 +488,264 @@ Widget emptyState() {
       ],
     ),
   );
+}
+
+class AllProductsItem extends StatelessWidget {
+  final String imagePath,
+      categoryName,
+      productName,
+      price,
+      offerPercent,
+      productId,
+      actualPrice;
+  final bool isOffer, isFeatured;
+
+  const AllProductsItem(
+      {this.imagePath,
+      this.categoryName,
+      this.productName,
+      this.price,
+      this.offerPercent,
+      this.productId,
+      this.actualPrice,
+      this.isOffer,
+      this.isFeatured});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetails(
+                  productId: productId,
+                ),
+              ));
+        },
+        child: Container(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                Expanded(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            height: 110.0,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Stack(
+                                children: <Widget>[
+                                  Container(
+                                    color: Colors.grey,
+                                    child: FadeInImage.memoryNetwork(
+                                      image: imagePath,
+                                      placeholder: kTransparentImage,
+                                      width: double.infinity,
+                                      height: 150,
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Transform.translate(
+                            offset: Offset(0.0, -18.0),
+                            child: Visibility(
+                              visible: isOffer,
+                              child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Text(
+                                    "$offerPercent% OFF",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13.0,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                                color: ThemeColors.themeOrange,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                SizedBox(
+                  width: 16.0,
+                ),
+                Expanded(
+                  flex: 8,
+                  child: SizedBox(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        SizedBox(
+                          height: 8.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              productName,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14.0,
+                              ),
+                            ),
+                            Spacer(),
+                            Visibility(
+                              visible: true,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 0.0, horizontal: 8.0),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 0.0, horizontal: 4.0),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.star,
+                                          color: ThemeColors.themeOrange,
+                                          size: 14.0,
+                                        ),
+                                        SizedBox(
+                                          width: 2.0,
+                                        ),
+                                        Text(
+                                          "Featured",
+                                          style: TextStyle(
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 3.0,
+                        ),
+                        Text(
+                          categoryName,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12.0,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 4.0,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            Transform.translate(
+                              offset: Offset(-2.0, 0),
+                              child: Icon(
+                                Icons.location_on,
+                                color: ThemeColors.themeOrange,
+                                size: 16.0,
+                              ),
+                            ),
+                            SizedBox(
+                              width: 2.0,
+                            ),
+                            Text(
+                              "Royapettah",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Divider(
+                          color: Colors.grey[200],
+                          endIndent: 18.0,
+                          thickness: 1.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                isOffer
+                                    ? Text(
+                                        "Rs $actualPrice",
+                                        style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12.0,
+                                            fontWeight: FontWeight.w700,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      )
+                                    : SizedBox(),
+                                Text(
+                                  "Rs $price",
+                                  style: TextStyle(
+                                    color: Colors.grey[800],
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Spacer(),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 16.0),
+                              child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    FontAwesome.star,
+                                    size: 12.0,
+                                    color: Colors.grey[700],
+                                  ),
+                                  SizedBox(
+                                    width: 4.0,
+                                  ),
+                                  Text(
+                                    "4.0",
+                                    style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

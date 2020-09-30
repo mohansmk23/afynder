@@ -16,7 +16,9 @@ import 'package:afynder/screens/merchantprofile_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,8 +38,10 @@ class _OfferMapState extends State<OfferMap> {
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true;
+  bool isLoading = true, isLocationFetching = true, _isAllOfferSelected = false;
   Response response;
+  Position _position;
+  List<bool> isSelected = [true, false];
 
   List<MerchantList> merchantList = [];
   List<LatLng> locations = [];
@@ -49,11 +53,11 @@ class _OfferMapState extends State<OfferMap> {
     });
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
-    ;
 
     try {
       response = await dio.post(merchantLocationList, data: {
         "apiMethod": "merchantsList",
+        "offerStatus": _isAllOfferSelected ? "" : "withOffer",
         "mobileUniqueCode": mobileUniqueCode
       });
       print(response);
@@ -61,11 +65,13 @@ class _OfferMapState extends State<OfferMap> {
       if (parsed["status"] == "success") {
         final MapModel model = MapModel.fromJson(parsed);
         merchantList = model.merchantList.toList();
-
+        mapMarkers.clear();
+        locations.clear();
         for (MerchantList merchant in merchantList) {
           if (merchant.lng.isNotEmpty && merchant.lat.isNotEmpty) {
             locations.add(
                 LatLng(double.parse(merchant.lat), double.parse(merchant.lng)));
+
             mapMarkers.add(MapMarker(merchant.offerAmt));
 
             print(merchant.offerAmt);
@@ -73,8 +79,6 @@ class _OfferMapState extends State<OfferMap> {
         }
         MarkerGenerator(mapMarkers, (bitmaps) {
           customMarkers = mapBitmapsToMarkers(bitmaps);
-
-          print(customMarkers.length);
 
           setState(() {});
         }).generate(context);
@@ -96,6 +100,17 @@ class _OfferMapState extends State<OfferMap> {
         .showSnackBar(new SnackBar(content: new Text(message)));
   }
 
+  void getCurrentLocation() async {
+    setState(() {
+      isLocationFetching = true;
+    });
+    _position =
+        await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      isLocationFetching = false;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +119,7 @@ class _OfferMapState extends State<OfferMap> {
     });
 
     getMerchantsList();
+    getCurrentLocation();
   }
 
   List<Marker> mapBitmapsToMarkers(List<Uint8List> bitmaps) {
@@ -148,18 +164,64 @@ class _OfferMapState extends State<OfferMap> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      body: Stack(
-        children: <Widget>[
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _center,
-              zoom: 16.0,
+      body: isLoading && isLocationFetching
+          ? Center(child: CircularProgressIndicator())
+          : Stack(
+              children: <Widget>[
+                GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(_position.latitude, _position.longitude),
+                    zoom: 16.0,
+                  ),
+                  markers: customMarkers.toSet(),
+                ),
+                Positioned(
+                  top: 16.0,
+                  right: 16.0,
+                  child: Card(
+                    child: ToggleButtons(
+                      borderColor: Colors.black,
+                      fillColor: Colors.blue,
+                      borderWidth: 0,
+                      selectedBorderColor: Colors.black,
+                      isSelected: isSelected,
+                      selectedColor: Colors.white,
+                      borderRadius: BorderRadius.circular(0),
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            MaterialIcons.local_offer,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.store,
+                          ),
+                        ),
+                      ],
+                      onPressed: (int index) {
+                        setState(() {
+                          for (int i = 0; i < isSelected.length; i++) {
+                            isSelected[i] = i == index;
+
+                            if (index == 0) {
+                              _isAllOfferSelected = false;
+                            } else {
+                              _isAllOfferSelected = true;
+                            }
+
+                            getMerchantsList();
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
-            markers: customMarkers.toSet(),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -178,7 +240,7 @@ Widget bottomSheet(
     double lat,
     double lng,
     String phone,
-    bool isOFfer) {
+    bool isOffer) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8.0),
     child: Container(
@@ -300,13 +362,13 @@ Widget bottomSheet(
             Row(
               children: <Widget>[
                 Text(
-                  isOFfer ? "$offerAmount% OFF" : "No Offers Now",
+                  isOffer ? "$offerAmount% OFF" : "No Offers Now",
                   style: TextStyle(
-                      color: isOFfer ? Colors.green : Colors.redAccent,
+                      color: isOffer ? Colors.green : Colors.redAccent,
                       fontSize: 16.0),
                 ),
                 Spacer(),
-                isOFfer
+                isOffer
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: <Widget>[
@@ -329,7 +391,7 @@ Widget bottomSheet(
               height: 8.0,
             ),
             Text(
-              isOFfer ? offerDescription : "Keep on track to grab offer",
+              isOffer ? offerDescription : "Keep on track to grab offer",
               style: TextStyle(
                 color: ThemeColors.themeColor5,
                 fontSize: 14.0,

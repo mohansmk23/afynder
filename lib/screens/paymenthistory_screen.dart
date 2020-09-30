@@ -45,7 +45,6 @@ class _PaymentHistoryState extends State<PaymentHistory> {
         isEmptyState = false;
       } else {
         isEmptyState = true;
-        _showSnackBar(parsed["message"]);
       }
     } catch (e) {
       isEmptyState = true;

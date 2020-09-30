@@ -116,6 +116,47 @@ class _CategoriesState extends State<Categories> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            width: double.maxFinite,
+            child: RaisedButton(
+              onPressed: () {
+                //Navigator.pushNamed(context, '/dashboard');
+
+                if (selectedCount != 0) {
+                  final CategorySelectionModel selectionParams =
+                      new CategorySelectionModel();
+                  List<SelectedCategories> categorySelection = [];
+                  for (CategoryList category in categoryList) {
+                    categorySelection.add(SelectedCategories(
+                        categoryId: category.categoryId,
+                        isSelected: category.isSelected));
+                  }
+                  selectionParams.apiMethod = 'CategorySelection';
+                  selectionParams.mobileUniqueCode = mobileUniqueCode;
+                  selectionParams.categories = categorySelection;
+
+                  postCategories(selectionParams);
+                } else {
+                  _showSnackBar("Please Select Atleast one Category");
+                }
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18.0),
+              ),
+              color: ThemeColors.themeOrange,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(
+                  "Select $selectedCount categories",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         key: _scaffoldKey,
         backgroundColor: Colors.white,
         body: isLoading
@@ -182,40 +223,7 @@ class _CategoriesState extends State<Categories> {
                     /*SizedBox(
             height: 16.0,
           ),*/
-                    RaisedButton(
-                      onPressed: () {
-                        //Navigator.pushNamed(context, '/dashboard');
 
-                        if (selectedCount != 0) {
-                          final CategorySelectionModel selectionParams =
-                              new CategorySelectionModel();
-                          List<SelectedCategories> categorySelection = [];
-                          for (CategoryList category in categoryList) {
-                            categorySelection.add(SelectedCategories(
-                                categoryId: category.categoryId,
-                                isSelected: category.isSelected));
-                          }
-                          selectionParams.apiMethod = 'CategorySelection';
-                          selectionParams.mobileUniqueCode = mobileUniqueCode;
-                          selectionParams.categories = categorySelection;
-
-                          postCategories(selectionParams);
-                        } else {
-                          _showSnackBar("Please Select Atleast one Category");
-                        }
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                      ),
-                      color: ThemeColors.themeOrange,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text(
-                          "Select $selectedCount categories",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
                     SizedBox(
                       height: 8.0,
                     ),
