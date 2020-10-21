@@ -277,9 +277,62 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   height: 16.0,
                                 ),
                                 CheckboxListTile(
-                                  title: Text(
-                                    "I agree to the Terms and Conditions & privacy policy",
-                                    style: TextStyle(fontSize: 15.0),
+                                  title: InkWell(
+                                    onTap: () {
+                                      showAboutDialog(
+                                          context: context,
+                                          applicationName: 'aFynder',
+                                          applicationIcon: Icon(Icons.android),
+                                          applicationVersion: '1.0',
+                                          children: [
+                                            Text(
+                                              "Terms and Conditions",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15.0,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 8.0,
+                                            ),
+                                            Text(
+                                              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fringilla convallis turpis, at semper nulla vestibulum eget. Mauris nulla ante, ornare a egestas vel, ultricies a tortor. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris feugiat, odio et commodo tincidunt, sapien nunc rutrum mauris, vitae mattis ipsum diam eget lorem. Nam ut gravida massa. Duis fringilla feugiat risus et luctus. Maecenas rutrum nisi facilisis, egestas enim at, lobortis nibh. Quisque eu enim sed risus congue feugiat in et turpis. Quisque at ultricies ex, eu elementum turpis.",
+                                              style: TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 16.0,
+                                            ),
+                                            Text(
+                                              "Privacy Policy",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15.0,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 8.0,
+                                            ),
+                                            Text(
+                                              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fringilla convallis turpis, at semper nulla vestibulum eget. Mauris nulla ante, ornare a egestas vel, ultricies a tortor. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris feugiat, odio et commodo tincidunt, sapien nunc rutrum mauris, vitae mattis ipsum diam eget lorem. Nam ut gravida massa. Duis fringilla feugiat risus et luctus. Maecenas rutrum nisi facilisis, egestas enim at, lobortis nibh. Quisque eu enim sed risus congue feugiat in et turpis. Quisque at ultricies ex, eu elementum turpis.",
+                                              style: TextStyle(
+                                                fontSize: 12.0,
+                                              ),
+                                            ),
+                                          ]);
+                                    },
+                                    child: Wrap(
+                                      children: <Widget>[
+                                        Text(
+                                          "I agree to the Terms and Conditions & privacy policy",
+                                          style: TextStyle(
+                                              fontSize: 15.0,
+                                              decoration:
+                                                  TextDecoration.underline),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   value: _terms,
                                   onChanged: (newval) {

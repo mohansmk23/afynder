@@ -109,7 +109,7 @@ class _DashboardState extends State<Dashboard> {
             child: profileImage),
         title: Text(
           "aFynder",
-          style: TextStyle(fontFamily: 'kalam'),
+          style: TextStyle(fontFamily: 'courgette'),
         ),
         elevation: 0,
         actions: <Widget>[Icon(Icons.search)],
