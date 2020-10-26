@@ -13,6 +13,7 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'nearme_screen.dart';
 
 class MerchantProfile extends StatefulWidget {
@@ -165,7 +166,10 @@ class _MerchantProfileState extends State<MerchantProfile>
                       child: FloatingActionButton(
                         heroTag: "o",
                         child: isConnectClicked ? Icon(Icons.call) : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          launch(
+                              "tel:// ${model.merchantInformations.shopContactNumber}");
+                        },
                       ),
                     ),
                     AnimatedContainer(
@@ -182,7 +186,11 @@ class _MerchantProfileState extends State<MerchantProfile>
                         heroTag: "1",
                         backgroundColor: Colors.indigo,
                         child: isConnectClicked ? Icon(Icons.mail) : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          var url =
+                              'sms: ${model.merchantInformations.shopContactNumber}?body=Hey i am interested in your product';
+                          launch(url);
+                        },
                       ),
                     ),
                     AnimatedContainer(
@@ -201,7 +209,10 @@ class _MerchantProfileState extends State<MerchantProfile>
                         child: isConnectClicked
                             ? Icon(Icons.directions)
                             : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          launch(
+                              "https://www.google.com/maps/dir/?api=1&destination=${model.merchantInformations.lat},${model.merchantInformations.lng}&travelmode=driving");
+                        },
                       ),
                     ),
                   ],
@@ -281,41 +292,10 @@ class _MerchantProfileState extends State<MerchantProfile>
                         children: <Widget>[
                           Column(
                             children: <Widget>[
-                              Text(
-                                "184",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: ThemeColors.themeColor5,
-                                    fontSize: 20.0,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                "Products",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: ThemeColors.themeColor5,
-                                  fontSize: 14.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            width: 16.0,
-                          ),
-                          Container(
-                            width: 1.0,
-                            height: 50,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(
-                            width: 16.0,
-                          ),
-                          Column(
-                            children: <Widget>[
                               Row(
                                 children: <Widget>[
                                   Text(
-                                    "4",
+                                    model.merchantInformations.rating,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                         color: ThemeColors.themeColor5,
@@ -329,7 +309,7 @@ class _MerchantProfileState extends State<MerchantProfile>
                                 ],
                               ),
                               Text(
-                                "154 Ratings",
+                                "${model.merchantInformations.ratingCount} Ratings",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: ThemeColors.themeColor5,
@@ -363,13 +343,13 @@ class _MerchantProfileState extends State<MerchantProfile>
                       ),
                       Container(
                         height: productList.length % 2 == 0
-                            ? 200 * productList.length / 2
-                            : 200 + 200 * productList.length / 2,
+                            ? 260 * productList.length / 2
+                            : 260 + 260 * productList.length / 2,
                         child: TabBarView(
                           controller: _controller,
                           children: <Widget>[
                             info(model),
-                            products(productList)
+                            products(productList, context)
                           ],
                         ),
                       ),
@@ -393,13 +373,15 @@ class _MerchantProfileState extends State<MerchantProfile>
   }
 }
 
-Widget products(List<ProductList> productList) {
+Widget products(List<ProductList> productList, BuildContext context) {
   return GridView.builder(
       padding: EdgeInsets.only(top: 0),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 5.0,
         mainAxisSpacing: 5.0,
+        childAspectRatio: MediaQuery.of(context).size.width /
+            (MediaQuery.of(context).size.height / 1.8),
       ),
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
@@ -440,7 +422,7 @@ Widget info(MerchantDetailsModel model) {
                 height: 8.0,
               ),
               Text(
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor ddfjhfjfhjhdfjfhjdfh",
+                model.merchantInformations.description,
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   color: ThemeColors.themeColor5,
@@ -509,7 +491,7 @@ Widget info(MerchantDetailsModel model) {
                   height: 8.0,
                 ),
                 Text(
-                  "Mon - Sat 8:30 AM - 9:00 Pm",
+                  "${model.merchantInformations.shopOpeningTime} - ${model.merchantInformations.shopClosingTime} }",
                   textAlign: TextAlign.start,
                   style: TextStyle(
                     color: ThemeColors.themeColor5,

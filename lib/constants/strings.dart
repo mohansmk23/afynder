@@ -6,4 +6,6 @@ const String profileImage = 'profileImage';
 const String mobileUniqueCode = 'mohan23';
 const String isSignnedIn = 'isSignnedIn';
 const String shopeeId = 'shopeeId';
-const String guestAuth = 'Sp-GUEST-8piLSWtrp_p1junLa8S_l';
+const String defaultProductsFilter =
+    "{\"apiMethod\":\"productList\",\"productId\":\"\",\"searchString\":\"\",\"categories\":[],\"priceFrom\":\"\",\"priceTo\":\"\",\"sorting\":\"\",\"mobileUniqueCode\":null}";
+const String guestAuth = 'yci5Gf6TXWWjA_4yRkuHc2ku2B0spo4E';

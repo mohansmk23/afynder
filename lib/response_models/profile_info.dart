@@ -32,15 +32,16 @@ class ShopeeDetails {
   String userCode;
   String lastName;
   String mailId;
-  String dob;
+  Null dob;
   String contactNumber;
-  String address;
-  String gender;
+  Null address;
+  Null gender;
   String profileImage;
   int walletAmount;
   String referenceNumber;
   String userType;
   String wislistCount;
+  String refQrCode;
 
   ShopeeDetails(
       {this.shopeeId,
@@ -58,7 +59,8 @@ class ShopeeDetails {
       this.walletAmount,
       this.referenceNumber,
       this.userType,
-      this.wislistCount});
+      this.wislistCount,
+      this.refQrCode});
 
   ShopeeDetails.fromJson(Map<String, dynamic> json) {
     shopeeId = json['shopeeId'];
@@ -77,6 +79,7 @@ class ShopeeDetails {
     referenceNumber = json['referenceNumber'];
     userType = json['userType'];
     wislistCount = json['wislistCount'];
+    refQrCode = json['refQrCode'];
   }
 
   Map<String, dynamic> toJson() {
@@ -97,6 +100,7 @@ class ShopeeDetails {
     data['referenceNumber'] = this.referenceNumber;
     data['userType'] = this.userType;
     data['wislistCount'] = this.wislistCount;
+    data['refQrCode'] = this.refQrCode;
     return data;
   }
 }

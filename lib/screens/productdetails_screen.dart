@@ -17,6 +17,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'connectmerchant.dart';
 import 'nearme_screen.dart';
 
@@ -120,6 +121,7 @@ class _ProductDetailsState extends State<ProductDetails> {
       print(response);
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
+        getProductDetails();
         product.shopeeRating = rating;
         isRated = true;
       } else {
@@ -199,7 +201,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                       child: FloatingActionButton(
                         heroTag: "o",
                         child: isConnectClicked ? Icon(Icons.call) : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          launch("tel:// ${product.shopContactNumber}");
+                        },
                       ),
                     ),
                     AnimatedContainer(
@@ -216,7 +220,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                         heroTag: "1",
                         backgroundColor: Colors.indigo,
                         child: isConnectClicked ? Icon(Icons.mail) : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          var url =
+                              'sms: ${product.shopContactNumber}?body=Hey i am interested in your product';
+                          launch(url);
+                        },
                       ),
                     ),
                     AnimatedContainer(
@@ -235,7 +243,10 @@ class _ProductDetailsState extends State<ProductDetails> {
                         child: isConnectClicked
                             ? Icon(Icons.directions)
                             : SizedBox(),
-                        onPressed: () {},
+                        onPressed: () {
+                          launch(
+                              "https://www.google.com/maps/dir/?api=1&destination=${product.lat},${product.lng}&travelmode=driving");
+                        },
                       ),
                     ),
                   ],
@@ -827,6 +838,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                                       crossAxisCount: 2,
                                       crossAxisSpacing: 5.0,
                                       mainAxisSpacing: 5.0,
+                                      childAspectRatio: MediaQuery.of(context)
+                                              .size
+                                              .width /
+                                          (MediaQuery.of(context).size.height /
+                                              1.8),
                                     ),
                                     shrinkWrap: true,
                                     physics: NeverScrollableScrollPhysics(),

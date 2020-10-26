@@ -5,23 +5,30 @@ import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
+import 'package:afynder/response_models/category_model.dart';
+import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/homesccreen_model.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class HomeScreen extends StatefulWidget {
+  final Function popularCategorySelection;
+
+  const HomeScreen({this.popularCategorySelection});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true;
+  bool isLoading = true, isRecentProductsAvailable = false;
   Response response;
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
   int hotOfferFix = 0;
@@ -31,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ProductList> newAdditionList = [];
   List<ProductList> hotOffers = [];
   List<ProductList> recentProducts = [];
+  List<CategoryList> categoryList = [];
 
   void getProducts() async {
     setState(() {
@@ -88,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _showSnackBar(parsed["message"]);
       }
     } catch (e) {
+      print("error");
       _showSnackBar("Network Error");
       print(e);
     }
@@ -148,6 +157,43 @@ class _HomeScreenState extends State<HomeScreen> {
       if (parsed["status"] == "success") {
         final HomeScreenModel model = HomeScreenModel.fromJson(parsed);
         recentProducts = model.productList.toList();
+
+        if (recentProducts.length > 0) {
+          isRecentProductsAvailable = true;
+        } else {
+          isRecentProductsAvailable = false;
+        }
+      } else {
+        // _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      //_showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void getCategories() async {
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+
+    String shopeeId = await _sharedPrefManager.getShopeeId();
+
+    try {
+      response = await dio.post(fetchCategories, data: {
+        "apiMethod": "CategoryList",
+        "shopeeId": shopeeId,
+        "callFor": "popularCategory",
+        "mobileUniqueCode": "jana1221"
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        final CategoryModel model = CategoryModel.fromJson(parsed);
+        categoryList = model.categoryList.toList();
       } else {
         _showSnackBar(parsed["message"]);
       }
@@ -162,8 +208,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showSnackBar(String message) {
-    _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(message)));
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
   }
 
   @override
@@ -172,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
     getNewAdditions();
     getHotOffers();
     getRecentProducts();
+    getCategories();
     super.initState();
   }
 
@@ -203,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          "View All",
+                          "",
                           style: TextStyle(color: Colors.black),
                         ),
                       )
@@ -214,10 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 210,
                     child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: newAdditionList.isEmpty
-                            ? 0
-                            : newAdditionList.length,
+                        itemCount: newAdditionList.length,
                         itemBuilder: (BuildContext ctxt, int index) {
+                          print("${newAdditionList.length} new Addition");
                           return NewAdditionItem(
                             imagePath: newAdditionList[index].productImages[0],
                             productName: newAdditionList[index].productName,
@@ -246,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          "View All",
+                          "",
                           style: TextStyle(color: Colors.black),
                         ),
                       )
@@ -287,6 +336,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             hotOffers[index].shopCategoryName,
                                         isFeatured:
                                             hotOffers[index].isFeature == "yes",
+                                        area: hotOffers[index].shopArea,
+                                        ratings: hotOffers[index].avgRatings,
                                       )
                                     : SizedBox(),
                                 ((index + 1) < hotOffers.length)
@@ -309,7 +360,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .shopCategoryName,
                                         isFeatured:
                                             hotOffers[index + 1].isFeature ==
-                                                "yes")
+                                                "yes",
+                                        area: hotOffers[index + 1].shopArea,
+                                        ratings:
+                                            hotOffers[index + 1].avgRatings,
+                                      )
                                     : SizedBox()
                               ],
                             );
@@ -330,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          "View All",
+                          "",
                           style: TextStyle(color: Colors.black),
                         ),
                       )
@@ -341,36 +396,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 150,
                     child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: hotOffers.isEmpty ? 0 : hotOffers.length,
+                        itemCount:
+                            categoryList.isEmpty ? 0 : categoryList.length,
                         itemBuilder: (BuildContext ctxt, int index) {
-                          return FeaturedItem(
-                            imagePath: hotOffers[index].productImages[0],
-                            name: "Category $index",
-                            visible: hotOffers[index].isOffer == "yes",
-                            offerPercent: hotOffers[index].offerAmount,
-                            productId: hotOffers[index].productId,
+                          return InkWell(
+                            onTap: () {
+                              FilterSelection filterSelection =
+                                  new FilterSelection();
+
+                              filterSelection.apiMethod = "productList";
+                              filterSelection.productId = "";
+                              filterSelection.searchString = "";
+                              filterSelection.priceFrom = "";
+                              filterSelection.priceTo = "";
+                              filterSelection.mobileUniqueCode =
+                                  mobileUniqueCode;
+
+                              filterSelection.sorting = "";
+                              filterSelection.categories = [];
+
+                              filterSelection.categories.add(Categories(
+                                  categoryName:
+                                      categoryList[index].categoryName,
+                                  categoryId: categoryList[index].categoryId));
+
+                              widget.popularCategorySelection(
+                                jsonEncode(filterSelection.toJson()),
+                              );
+                            },
+                            child: PopularCategoryItem(
+                              imagePath: categoryList[index].categoryImage,
+                              name: categoryList[index].categoryName,
+                              catId: categoryList[index].categoryId,
+                            ),
                           );
                         }),
                   ),
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: Text(
-                          "RECENT PRODUCTS",
-                          style: TextStyle(color: Colors.grey, fontSize: 16.0),
+                  Visibility(
+                    visible: isRecentProductsAvailable,
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 16.0),
+                          child: Text(
+                            "RECENT PRODUCTS",
+                            style:
+                                TextStyle(color: Colors.grey, fontSize: 16.0),
+                          ),
                         ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "View All",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      )
-                    ],
+                        Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "",
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                   SizedBox(height: 16.0),
                   Container(
@@ -526,16 +610,10 @@ class ChoiceItem extends StatelessWidget {
   }
 }
 
-class FeaturedItem extends StatelessWidget {
-  final String imagePath, name, offerPercent, productId;
-  final bool visible;
+class PopularCategoryItem extends StatelessWidget {
+  final String imagePath, name, catId;
 
-  const FeaturedItem(
-      {this.imagePath,
-      this.name,
-      this.visible,
-      this.offerPercent,
-      this.productId});
+  const PopularCategoryItem({this.imagePath, this.name, this.catId});
 
   @override
   Widget build(BuildContext context) {
@@ -543,16 +621,6 @@ class FeaturedItem extends StatelessWidget {
       height: 150.0,
       width: 150.0,
       child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetails(
-                productId: productId,
-              ),
-            ),
-          );
-        },
         child: Card(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8.0),
@@ -566,37 +634,22 @@ class FeaturedItem extends StatelessWidget {
                   height: double.infinity,
                   fit: BoxFit.fill,
                 ),
-                Container(
-                  color: Color.fromRGBO(255, 255, 255, 0.19),
-                ),
                 Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.black38,
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
                     child: Text(
                       name,
-                      style: TextStyle(color: Colors.white, fontSize: 14.0),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                Visibility(
-                  visible: false,
-                  child: Align(
-                      alignment: Alignment.topRight,
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            "$offerPercent% OFF",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 12.0),
-                          ),
-                        ),
-                        color: ThemeColors.themeOrange,
-                      )),
-                )
               ],
             ),
           ),
@@ -613,7 +666,9 @@ class HotOffersItem extends StatelessWidget {
       price,
       offerPercent,
       productId,
-      actualPrice;
+      actualPrice,
+      area,
+      ratings;
   final bool isOffer, isFeatured;
 
   const HotOffersItem(
@@ -625,7 +680,9 @@ class HotOffersItem extends StatelessWidget {
       this.productId,
       this.actualPrice,
       this.isOffer,
-      this.isFeatured});
+      this.isFeatured,
+      this.area,
+      this.ratings});
 
   @override
   Widget build(BuildContext context) {
@@ -666,6 +723,47 @@ class HotOffersItem extends StatelessWidget {
                                   width: double.infinity,
                                   height: 150,
                                   fit: BoxFit.fill,
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.topCenter,
+                                child: Visibility(
+                                  visible: isFeatured,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 0.0, horizontal: 0.0),
+                                    child: Card(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15.0),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 0.0, horizontal: 4.0),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: <Widget>[
+                                            Icon(
+                                              Icons.star,
+                                              color: ThemeColors.themeOrange,
+                                              size: 14.0,
+                                            ),
+                                            SizedBox(
+                                              width: 2.0,
+                                            ),
+                                            Text(
+                                              "Featured",
+                                              style: TextStyle(
+                                                  fontSize: 12.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -714,42 +812,6 @@ class HotOffersItem extends StatelessWidget {
                             ),
                           ),
                           Spacer(),
-                          Visibility(
-                            visible: true,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 0.0, horizontal: 16.0),
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 0.0, horizontal: 4.0),
-                                  child: Row(
-                                    children: <Widget>[
-                                      Icon(
-                                        Icons.star,
-                                        color: ThemeColors.themeOrange,
-                                        size: 14.0,
-                                      ),
-                                      SizedBox(
-                                        width: 2.0,
-                                      ),
-                                      Text(
-                                        "Featured",
-                                        style: TextStyle(
-                                            fontSize: 12.0,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                       SizedBox(
@@ -780,7 +842,7 @@ class HotOffersItem extends StatelessWidget {
                             width: 2.0,
                           ),
                           Text(
-                            "Royapettah",
+                            area,
                             style: TextStyle(
                               color: Colors.grey,
                               fontSize: 12.0,
@@ -828,13 +890,13 @@ class HotOffersItem extends StatelessWidget {
                                 Icon(
                                   FontAwesome.star,
                                   size: 12.0,
-                                  color: Colors.grey[700],
+                                  color: Colors.amber[700],
                                 ),
                                 SizedBox(
                                   width: 4.0,
                                 ),
                                 Text(
-                                  "4.0",
+                                  ratings,
                                   style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 14.0,

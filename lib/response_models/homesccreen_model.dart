@@ -46,6 +46,8 @@ class ProductList {
   String productName;
   String productCode;
   String productDetails;
+  String specifications;
+  String features;
   String actualAmount;
   String isOffer;
   String isFeature;
@@ -62,6 +64,14 @@ class ProductList {
   String shopeeRating;
   String wishlistStatus;
   String shopCategoryName;
+  String city;
+  String website;
+  String description;
+  String area;
+  String shopPincode;
+  String shopState;
+  String shopCity;
+  String shopArea;
   String shopLogo;
   String shopMailId;
   String merchantName;
@@ -81,6 +91,8 @@ class ProductList {
       this.productName,
       this.productCode,
       this.productDetails,
+      this.specifications,
+      this.features,
       this.actualAmount,
       this.isOffer,
       this.isFeature,
@@ -97,6 +109,14 @@ class ProductList {
       this.shopeeRating,
       this.wishlistStatus,
       this.shopCategoryName,
+      this.city,
+      this.website,
+      this.description,
+      this.area,
+      this.shopPincode,
+      this.shopState,
+      this.shopCity,
+      this.shopArea,
       this.shopLogo,
       this.shopMailId,
       this.merchantName,
@@ -116,6 +136,8 @@ class ProductList {
     productName = json['productName'];
     productCode = json['productCode'];
     productDetails = json['productDetails'];
+    specifications = json['specifications'];
+    features = json['features'];
     actualAmount = json['actualAmount'];
     isOffer = json['isOffer'];
     isFeature = json['is_feature'];
@@ -132,6 +154,14 @@ class ProductList {
     shopeeRating = json['shopeeRating'];
     wishlistStatus = json['wishlistStatus'];
     shopCategoryName = json['shopCategoryName'];
+    city = json['City'];
+    website = json['website'];
+    description = json['description'];
+    area = json['Area'];
+    shopPincode = json['shopPincode'];
+    shopState = json['shopState'];
+    shopCity = json['shopCity'];
+    shopArea = json['shopArea'];
     shopLogo = json['shopLogo'];
     shopMailId = json['shopMailId'];
     merchantName = json['merchantName'];
@@ -153,6 +183,8 @@ class ProductList {
     data['productName'] = this.productName;
     data['productCode'] = this.productCode;
     data['productDetails'] = this.productDetails;
+    data['specifications'] = this.specifications;
+    data['features'] = this.features;
     data['actualAmount'] = this.actualAmount;
     data['isOffer'] = this.isOffer;
     data['is_feature'] = this.isFeature;
@@ -169,6 +201,14 @@ class ProductList {
     data['shopeeRating'] = this.shopeeRating;
     data['wishlistStatus'] = this.wishlistStatus;
     data['shopCategoryName'] = this.shopCategoryName;
+    data['City'] = this.city;
+    data['website'] = this.website;
+    data['description'] = this.description;
+    data['Area'] = this.area;
+    data['shopPincode'] = this.shopPincode;
+    data['shopState'] = this.shopState;
+    data['shopCity'] = this.shopCity;
+    data['shopArea'] = this.shopArea;
     data['shopLogo'] = this.shopLogo;
     data['shopMailId'] = this.shopMailId;
     data['merchantName'] = this.merchantName;

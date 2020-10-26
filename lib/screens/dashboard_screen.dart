@@ -24,6 +24,7 @@ class _DashboardState extends State<Dashboard> {
   DateTime currentBackPressTime;
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
   Widget profileImage;
+  String categorySelection = defaultProductsFilter;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   Future<bool> onWillPop() {
     DateTime now = DateTime.now();
@@ -42,11 +43,7 @@ class _DashboardState extends State<Dashboard> {
         duration: Duration(seconds: 1), content: new Text(message)));
   }
 
-  final List<Widget> _currentScreens = [
-    HomeScreen(),
-    NearMe(),
-    OfferMap(),
-  ];
+  List<Widget> _currentScreens = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -98,6 +95,19 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
+    _currentScreens = [
+      HomeScreen(
+        popularCategorySelection: (selection) {
+          categorySelection = selection;
+          _onItemTapped(1);
+        },
+      ),
+      NearMe(
+        categorySelection: categorySelection,
+      ),
+      OfferMap(),
+    ];
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -112,7 +122,6 @@ class _DashboardState extends State<Dashboard> {
           style: TextStyle(fontFamily: 'courgette'),
         ),
         elevation: 0,
-        actions: <Widget>[Icon(Icons.search)],
       ),
       body: WillPopScope(
         onWillPop: onWillPop,
@@ -151,6 +160,7 @@ class _DashboardState extends State<Dashboard> {
                         child: InkWell(
                             onTap: () {
                               setState(() {
+                                categorySelection = defaultProductsFilter;
                                 _onItemTapped(1);
                               });
                             },

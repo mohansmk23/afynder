@@ -12,12 +12,17 @@ import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 import 'home_screen.dart';
 
 class NearMe extends StatefulWidget {
+  final categorySelection;
+
+  const NearMe({this.categorySelection});
+
   @override
   _NearMeState createState() => _NearMeState();
 }
@@ -64,8 +69,11 @@ class _NearMeState extends State<NearMe> {
   }
 
   void _showSnackBar(String message) {
-    _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(message)));
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
   }
 
   List<Widget> getFilteredChips() {
@@ -171,14 +179,19 @@ class _NearMeState extends State<NearMe> {
 
   @override
   void initState() {
-    requestModel.apiMethod = "productList";
-    requestModel.productId = "";
-    requestModel.searchString = "";
-    requestModel.categories = [];
-    requestModel.priceTo = "";
-    requestModel.priceFrom = "";
-    requestModel.sorting = "";
-    isFiltered = false;
+    // requestModel.apiMethod = "productList";
+    // requestModel.productId = "";
+    // requestModel.searchString = "";
+    // requestModel.categories = [];
+    // requestModel.priceTo = "";
+    // requestModel.priceFrom = "";
+    // requestModel.sorting = "";
+    // isFiltered = false;
+
+    requestModel =
+        FilterSelection.fromJson(json.decode(widget.categorySelection));
+    isFiltered = true;
+
     getAllProducts();
     super.initState();
   }
@@ -279,6 +292,8 @@ class _NearMeState extends State<NearMe> {
                                     categoryName:
                                         productList[index].shopCategoryName,
                                     productId: productList[index].productId,
+                                    areaName: productList[index].shopArea,
+                                    rating: productList[index].avgRatings,
                                   )),
                         ),
                 ],
@@ -415,36 +430,16 @@ class NearbyItem extends StatelessWidget {
                                 fontSize: 14.0,
                               ),
                             ),
+                            SizedBox(
+                              height: 2.0,
+                            ),
                             Text(
                               category,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                               style: TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Spacer(),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: <Widget>[
-                            isOffer
-                                ? Text(
-                                    "Rs.$actualPrice",
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12.0,
-                                      fontWeight: FontWeight.w700,
-                                      decoration: TextDecoration.lineThrough,
-                                    ),
-                                  )
-                                : SizedBox(),
-                            Text(
-                              "Rs.$price",
-                              style: TextStyle(
-                                color: Colors.grey[800],
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.0,
                               ),
                             ),
                           ],
@@ -497,6 +492,8 @@ class AllProductsItem extends StatelessWidget {
       price,
       offerPercent,
       productId,
+      areaName,
+      rating,
       actualPrice;
   final bool isOffer, isFeatured;
 
@@ -509,7 +506,9 @@ class AllProductsItem extends StatelessWidget {
       this.productId,
       this.actualPrice,
       this.isOffer,
-      this.isFeatured});
+      this.isFeatured,
+      this.areaName,
+      this.rating});
 
   @override
   Widget build(BuildContext context) {
@@ -537,9 +536,9 @@ class AllProductsItem extends StatelessWidget {
                     flex: 4,
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
                           Container(
                             height: 110.0,
                             child: ClipRRect(
@@ -560,22 +559,65 @@ class AllProductsItem extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Transform.translate(
-                            offset: Offset(0.0, -18.0),
+                          Positioned(
+                            top: 2.0,
+                            left: 2.0,
+                            child: Visibility(
+                              visible: isFeatured,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 0.0, horizontal: 0.0),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 0.0, horizontal: 4.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.star,
+                                          color: ThemeColors.themeOrange,
+                                          size: 14.0,
+                                        ),
+                                        SizedBox(
+                                          width: 2.0,
+                                        ),
+                                        Text(
+                                          "Featured",
+                                          style: TextStyle(
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.bottomRight,
                             child: Visibility(
                               visible: isOffer,
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Text(
-                                    "$offerPercent% OFF",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13.0,
-                                        color: Colors.white),
+                              child: Container(
+                                child: Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Text(
+                                      "$offerPercent% OFF",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.0,
+                                          color: Colors.white),
+                                    ),
                                   ),
+                                  color: ThemeColors.themeOrange,
                                 ),
-                                color: ThemeColors.themeOrange,
                               ),
                             ),
                           ),
@@ -603,43 +645,6 @@ class AllProductsItem extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 14.0,
-                              ),
-                            ),
-                            Spacer(),
-                            Visibility(
-                              visible: true,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 0.0, horizontal: 8.0),
-                                child: Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 0.0, horizontal: 4.0),
-                                    child: Row(
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.star,
-                                          color: ThemeColors.themeOrange,
-                                          size: 14.0,
-                                        ),
-                                        SizedBox(
-                                          width: 2.0,
-                                        ),
-                                        Text(
-                                          "Featured",
-                                          style: TextStyle(
-                                              fontSize: 12.0,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  color: Colors.white,
-                                ),
                               ),
                             ),
                           ],
@@ -672,7 +677,7 @@ class AllProductsItem extends StatelessWidget {
                               width: 2.0,
                             ),
                             Text(
-                              "Royapettah",
+                              areaName,
                               style: TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12.0,
@@ -720,13 +725,13 @@ class AllProductsItem extends StatelessWidget {
                                   Icon(
                                     FontAwesome.star,
                                     size: 12.0,
-                                    color: Colors.grey[700],
+                                    color: Colors.amber[700],
                                   ),
                                   SizedBox(
                                     width: 4.0,
                                   ),
                                   Text(
-                                    "4.0",
+                                    rating,
                                     style: TextStyle(
                                         color: Colors.grey,
                                         fontSize: 14.0,

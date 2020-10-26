@@ -32,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File _image;
   final FocusNode myFocusNode = FocusNode();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  String fName, lName, email, mobile, password;
+  String fName, lName, email, mobile, password, qrCodePic;
   bool isLoading = true;
   Response response;
   ProfileModel model = new ProfileModel();
@@ -47,7 +47,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void open_gallery() async {
     _image = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-    _image = await ImageCropper.cropImage(sourcePath: _image.path);
+    _image = await ImageCropper.cropImage(
+        sourcePath: _image.path, cropStyle: CropStyle.circle);
 
     setState(() {
       print("done");
@@ -75,7 +76,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> updateProfileInfo() async {
-    print("darkhorse");
     setState(() {
       isLoading = true;
     });
@@ -131,6 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
         model = ProfileModel.fromJson(parsed);
+        qrCodePic = model.shopeeDetails.refQrCode;
         fNameController.text = model.shopeeDetails.shopeeName;
         lNameController.text = model.shopeeDetails.lastName;
         emailIdController.text = model.shopeeDetails.mailId;
@@ -474,7 +475,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           SizedBox(
                                             height: 16.0,
                                           ),
-                                          Image.asset("assets/qrcode.png")
+                                          Image.network(qrCodePic)
                                         ],
                                       ),
                                     ),

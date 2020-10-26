@@ -191,6 +191,7 @@ class _CategoriesState extends State<Categories> {
                       height: 24.0,
                     ),
                     GridView.builder(
+                        padding: EdgeInsets.only(bottom: 54.0),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 5.0,
@@ -262,16 +263,20 @@ class CategoryWidget extends StatelessWidget {
                   height: double.infinity,
                   fit: BoxFit.fill,
                 ),
-                Container(
-                  color: Color.fromRGBO(255, 255, 255, 0.19),
-                ),
-                Center(
-                  child: Text(
-                    catName,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.bold),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.black38,
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                    child: Text(
+                      catName,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
                 Align(

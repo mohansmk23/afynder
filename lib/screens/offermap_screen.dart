@@ -18,9 +18,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Markergenerator.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -48,9 +50,13 @@ class _OfferMapState extends State<OfferMap> {
   List<Widget> mapMarkers = [];
 
   void getMerchantsList() async {
+    print("called");
     setState(() {
       isLoading = true;
     });
+
+    // dio.interceptors.add(PrettyDioLogger());
+
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -60,13 +66,14 @@ class _OfferMapState extends State<OfferMap> {
         "offerStatus": _isAllOfferSelected ? "" : "withOffer",
         "mobileUniqueCode": mobileUniqueCode
       });
-      print(response);
       final Map<String, dynamic> parsed = json.decode(response.data);
+      mapMarkers.clear();
+      locations.clear();
+      customMarkers.clear();
+      merchantList.clear();
       if (parsed["status"] == "success") {
         final MapModel model = MapModel.fromJson(parsed);
         merchantList = model.merchantList.toList();
-        mapMarkers.clear();
-        locations.clear();
         for (MerchantList merchant in merchantList) {
           if (merchant.lng.isNotEmpty && merchant.lat.isNotEmpty) {
             locations.add(
@@ -83,7 +90,15 @@ class _OfferMapState extends State<OfferMap> {
           setState(() {});
         }).generate(context);
       } else {
-        _showSnackBar(parsed["message"]);
+        MarkerGenerator(mapMarkers, (bitmaps) {
+          customMarkers = mapBitmapsToMarkers(bitmaps);
+
+          setState(() {});
+        }).generate(context);
+        if (!_isAllOfferSelected) {
+          showAlertDialog(context);
+          isSelected = [false, true];
+        }
       }
     } catch (e) {
       _showSnackBar("Network Error");
@@ -96,8 +111,11 @@ class _OfferMapState extends State<OfferMap> {
   }
 
   void _showSnackBar(String message) {
-    _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(message)));
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
   }
 
   void getCurrentLocation() async {
@@ -139,11 +157,11 @@ class _OfferMapState extends State<OfferMap> {
                       merchant.merchantId,
                       merchant.firstName,
                       merchant.shopCategoryName,
-                      "754",
-                      2.5,
+                      merchant.ratingCount,
+                      double.parse(merchant.rating),
                       merchant.offerAmt,
-                      "all products offer lorem ",
-                      "23 september 2020",
+                      "",
+                      merchant.offerUntil,
                       merchant.shopAddress,
                       double.parse(merchant.lat),
                       double.parse(merchant.lng),
@@ -164,15 +182,17 @@ class _OfferMapState extends State<OfferMap> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      body: isLoading && isLocationFetching
+      body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Stack(
               children: <Widget>[
                 GoogleMap(
                   onMapCreated: _onMapCreated,
                   initialCameraPosition: CameraPosition(
-                    target: LatLng(_position.latitude, _position.longitude),
-                    zoom: 16.0,
+                    target: isLocationFetching
+                        ? LatLng(11.0168, 76.9558)
+                        : LatLng(_position.latitude, _position.longitude),
+                    zoom: 10.0,
                   ),
                   markers: customMarkers.toSet(),
                 ),
@@ -443,5 +463,33 @@ Widget bottomSheet(
         ),
       ),
     ),
+  );
+}
+
+showAlertDialog(BuildContext context) {
+  // set up the button
+  Widget okButton = FlatButton(
+    child: Text("OK"),
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  );
+
+  // set up the AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: Text("Currently No Offers"),
+    content: Text(
+        "Sorry ! no offers currently running, stay connected for upcoming offers"),
+    actions: [
+      okButton,
+    ],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
   );
 }

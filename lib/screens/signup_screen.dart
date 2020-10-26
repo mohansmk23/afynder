@@ -117,68 +117,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           SizedBox(
                             height: 24.0,
                           ),
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: SocialMediaButton(
-                                  text: "Google",
-                                  prefixIcon: Icon(
-                                    FontAwesome.google,
-                                    color: Colors.white,
-                                  ),
-                                  buttonColor: Colors.blue,
-                                  onTap: () {},
-                                ),
-                              ),
-                              SizedBox(
-                                width: 8.0,
-                              ),
-                              Expanded(
-                                child: SocialMediaButton(
-                                  text: "Facebook",
-                                  prefixIcon: Icon(
-                                    FontAwesome.facebook,
-                                    color: Colors.white,
-                                  ),
-                                  buttonColor: Colors.blueAccent,
-                                  onTap: () {},
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 24.0,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: <Widget>[
-                              Expanded(
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(0, 0, 8.0, 0),
-                                  child: Container(
-                                    height: 1.0,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                "Or",
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16.0),
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
-                                  child: Container(
-                                    height: 1.0,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                           SizedBox(
                             height: 24.0,
                           ),
@@ -193,6 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         label: 'First Name',
                                         keyboardType: TextInputType.text,
                                         isPassword: false,
+                                        isMobile: false,
                                         validator: (value) {
                                           if (value.isEmpty) {
                                             return 'Please enter first name';
@@ -209,6 +148,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     Expanded(
                                       child: LabelFormField(
                                         label: 'Last Name',
+                                        isMobile: false,
                                         keyboardType: TextInputType.text,
                                         isPassword: false,
                                         validator: (value) {
@@ -229,6 +169,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 LabelFormField(
                                   label: 'Email',
                                   isPassword: false,
+                                  isMobile: false,
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (!RegExp(
@@ -246,6 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 LabelFormField(
                                   label: 'Mobile',
+                                  isMobile: true,
                                   keyboardType: TextInputType.phone,
                                   isPassword: false,
                                   validator: (value) {
@@ -262,13 +204,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 LabelFormField(
                                   label: 'Password',
+                                  isMobile: false,
                                   keyboardType: TextInputType.visiblePassword,
                                   isPassword: true,
                                   validator: (value) {
                                     if (value.isEmpty) {
                                       return 'Please enter valid password';
+                                    } else if (value.toString().length < 8) {
+                                      return 'Password must be atleast 8 characters';
                                     } else {
                                       password = value;
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(
+                                  height: 16.0,
+                                ),
+                                LabelFormField(
+                                  label: 'Confirm Password',
+                                  isMobile: false,
+                                  keyboardType: TextInputType.visiblePassword,
+                                  isPassword: true,
+                                  validator: (value) {
+                                    if (value.isEmpty) {
+                                      return 'Please enter valid password';
+                                    } else if (value != password) {
+                                      return 'PassWord and confirm password not matching';
                                     }
                                     return null;
                                   },
@@ -433,9 +395,14 @@ class LabelFormField extends StatelessWidget {
   final Function validator;
   final TextInputType keyboardType;
   final bool isPassword;
+  final bool isMobile;
 
   const LabelFormField(
-      {this.label, this.validator, this.keyboardType, this.isPassword});
+      {this.label,
+      this.validator,
+      this.keyboardType,
+      this.isPassword,
+      this.isMobile});
 
   @override
   Widget build(BuildContext context) {
@@ -456,10 +423,18 @@ class LabelFormField extends StatelessWidget {
           keyboardType: keyboardType,
           obscureText: isPassword,
           textInputAction: TextInputAction.next,
+          maxLength: isMobile ? 10 : null,
           onEditingComplete: () => FocusScope.of(context).nextFocus(),
           decoration: new InputDecoration(
+              prefixIcon: isMobile
+                  ? Text(
+                      " +91 ",
+                      style: TextStyle(fontSize: 16.0),
+                    )
+                  : null,
+              prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 4.0, vertical: 0),
+                  EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
               hintStyle: TextStyle(fontSize: 18.0),
               border: new OutlineInputBorder(
                 borderSide: BorderSide(

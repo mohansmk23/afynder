@@ -72,7 +72,7 @@ class _LandingScreenState extends State<LandingScreen>
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           Expanded(
-            flex: 10,
+            flex: 12,
             child: Stack(fit: StackFit.expand, children: <Widget>[
               PageView(
                 controller: _pageController,
@@ -134,7 +134,9 @@ class _LandingScreenState extends State<LandingScreen>
                         child: LinearProgressIndicator(
                           value: _sliderCurrentIndex == 0
                               ? controller.value
-                              : _sliderCurrentIndex > 0 ? 1.0 : 0,
+                              : _sliderCurrentIndex > 0
+                                  ? 1.0
+                                  : 0,
                           backgroundColor: Colors.grey,
                           valueColor:
                               AlwaysStoppedAnimation<Color>(Colors.white),
@@ -147,7 +149,9 @@ class _LandingScreenState extends State<LandingScreen>
                         child: LinearProgressIndicator(
                           value: _sliderCurrentIndex == 1
                               ? controller.value
-                              : _sliderCurrentIndex > 1 ? 1.0 : 0,
+                              : _sliderCurrentIndex > 1
+                                  ? 1.0
+                                  : 0,
                           backgroundColor: Colors.grey,
                           valueColor:
                               AlwaysStoppedAnimation<Color>(Colors.white),
@@ -160,7 +164,9 @@ class _LandingScreenState extends State<LandingScreen>
                         child: LinearProgressIndicator(
                           value: _sliderCurrentIndex == 2
                               ? controller.value
-                              : _sliderCurrentIndex == 2 ? 1.0 : 0,
+                              : _sliderCurrentIndex == 2
+                                  ? 1.0
+                                  : 0,
                           backgroundColor: Colors.grey,
                           valueColor:
                               AlwaysStoppedAnimation<Color>(Colors.white),
@@ -178,102 +184,25 @@ class _LandingScreenState extends State<LandingScreen>
           Expanded(
             flex: 4,
             child: Container(
+              padding: EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0, vertical: 0),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: SocialMediaButton(
-                            text: "Google",
-                            prefixIcon: Icon(
-                              FontAwesome.google,
-                              color: Colors.white,
-                            ),
-                            buttonColor: Colors.blueAccent,
-                            onTap: () {
-                              _googleSignIn.signIn();
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          width: 16.0,
-                        ),
-                        Expanded(
-                          child: SocialMediaButton(
-                            text: "Facebook",
-                            prefixIcon: Icon(
-                              FontAwesome.facebook,
-                              color: Colors.white,
-                            ),
-                            buttonColor: Colors.blue[800],
-                            onTap: () {},
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 0.0, horizontal: 20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: <Widget>[
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(0.0, 6.0, 6.0, 6.0),
-                            child: Container(
-                              height: 1.0,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          "OR USING EMAIL",
-                          style: TextStyle(color: Colors.grey, fontSize: 14.0),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(6.0, 6.0, 0.0, 6.0),
-                            child: Container(
-                              height: 1.0,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        EmailSignButton(
-                          text: "Sign in",
-                          onpressed: () {
-                            Navigator.pushNamed(context, '/signin');
-                          },
-                        ),
-                        SizedBox(
-                          width: 16.0,
-                        ),
-                        EmailSignButton(
-                          text: "Sign up",
-                          onpressed: () {
-                            Navigator.pushNamed(context, '/signup');
-                          },
-                        ),
-                      ],
-                    ),
+                  EmailSignButton(
+                    text: "Sign in",
+                    onpressed: () {
+                      Navigator.pushNamed(context, '/signin');
+                    },
                   ),
                   SizedBox(
-                    height: 4.0,
+                    height: 16.0,
                   ),
+                  EmailSignButton(
+                    text: "Sign up",
+                    onpressed: () {
+                      Navigator.pushNamed(context, '/signup');
+                    },
+                  ),
+                  Spacer(),
                   InkWell(
                     onTap: () {
                       Navigator.pop(context);
@@ -345,18 +274,16 @@ class EmailSignButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: RaisedButton(
-        onPressed: onpressed,
-        child: Center(
-            child: Text(
-          text,
-          style: TextStyle(fontSize: 20.0),
-        )),
-        textColor: Colors.white,
-        color: ThemeColors.themeOrange,
-        padding: EdgeInsets.all(12.0),
-      ),
+    return RaisedButton(
+      onPressed: onpressed,
+      child: Center(
+          child: Text(
+        text,
+        style: TextStyle(fontSize: 20.0),
+      )),
+      textColor: Colors.white,
+      color: ThemeColors.themeOrange,
+      padding: EdgeInsets.all(12.0),
     );
   }
 }
