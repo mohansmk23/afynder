@@ -476,6 +476,9 @@ showAlertDialog(BuildContext context) {
   );
 
   // set up the AlertDialog
+
+
+
   AlertDialog alert = AlertDialog(
     title: Text("Currently No Offers"),
     content: Text(
