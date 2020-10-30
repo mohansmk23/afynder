@@ -196,6 +196,11 @@ class _NearMeState extends State<NearMe> {
     super.initState();
   }
 
+  Future<String> _refreshHomeScreen() async {
+    getAllProducts();
+    return 'success';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,98 +210,111 @@ class _NearMeState extends State<NearMe> {
           ? Center(child: CircularProgressIndicator())
           : Container(
               color: Colors.grey[200],
-              child: ListView(
-                children: <Widget>[
-                  Container(
-                    height: getFilteredChips().length == 0 ? 0.0 : 50.0,
-                    color: Colors.grey[200],
-                    child: ListView(
-                      shrinkWrap: true,
-                      physics: ClampingScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      children: isFiltered ? getFilteredChips() : [SizedBox()],
-                    ),
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 0.0, horizontal: 12.0),
-                        child: Text(
-                          "Todays Picks",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold),
-                        ),
+              child: RefreshIndicator(
+                onRefresh: _refreshHomeScreen,
+                child: ListView(
+                  children: <Widget>[
+                    Container(
+                      height: getFilteredChips().length == 0 ? 0.0 : 50.0,
+                      color: Colors.grey[200],
+                      child: ListView(
+                        shrinkWrap: true,
+                        physics: ClampingScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        children:
+                            isFiltered ? getFilteredChips() : [SizedBox()],
                       ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Icon(
-                              Icons.filter_list,
-                              color: Colors.blue,
-                            ),
-                            InkWell(
-                              onTap: () async {
-                                filterParams = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => FilterScreen(
-                                        filterSelection: requestModel,
-                                      ),
-                                    ));
-
-                                setState(() {
-                                  requestModel = FilterSelection.fromJson(
-                                      json.decode(filterParams));
-                                  isFiltered = true;
-                                  getAllProducts();
-                                });
-                              },
-                              child: Text(
-                                " Filter",
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ],
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 0.0, horizontal: 12.0),
+                          child: Text(
+                            "Todays Picks",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      )
-                    ],
-                  ),
-                  isEmptyState
-                      ? emptyState()
-                      : Padding(
+                        Spacer(),
+                        Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: ListView.builder(
-                              padding: EdgeInsets.only(bottom: 80.0),
-                              shrinkWrap: true,
-                              physics: ClampingScrollPhysics(),
-                              itemCount:
-                                  productList.isEmpty ? 0 : productList.length,
-                              itemBuilder: (context, index) => AllProductsItem(
-                                    imagePath:
-                                        productList[index].productImages[0],
-                                    productName: productList[index].productName,
-                                    isOffer:
-                                        productList[index].isOffer == "yes",
-                                    isFeatured:
-                                        productList[index].isFeature == "yes",
-                                    actualPrice:
-                                        productList[index].actualAmount,
-                                    price: productList[index].sellingAmount,
-                                    offerPercent:
-                                        productList[index].offerAmount,
-                                    categoryName:
-                                        productList[index].shopCategoryName,
-                                    productId: productList[index].productId,
-                                    areaName: productList[index].shopArea,
-                                    rating: productList[index].avgRatings,
-                                  )),
-                        ),
-                ],
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.filter_list,
+                                color: Colors.blue,
+                              ),
+                              InkWell(
+                                onTap: () async {
+                                  filterParams = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FilterScreen(
+                                          filterSelection: requestModel,
+                                        ),
+                                      ));
+
+                                  setState(() {
+                                    requestModel = FilterSelection.fromJson(
+                                        json.decode(filterParams));
+                                    isFiltered = true;
+                                    getAllProducts();
+                                  });
+                                },
+                                child: Text(
+                                  " Filter",
+                                  style: TextStyle(color: Colors.blue),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                    isEmptyState
+                        ? emptyState()
+                        : Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ListView.builder(
+                                padding: EdgeInsets.only(bottom: 80.0),
+                                shrinkWrap: true,
+                                physics: ClampingScrollPhysics(),
+                                itemCount: productList.isEmpty
+                                    ? 0
+                                    : productList.length,
+                                itemBuilder: (context, index) =>
+                                    AllProductsItem(
+                                      imagePath:
+                                          productList[index].productImages[0],
+                                      productName:
+                                          productList[index].productName,
+                                      isOffer:
+                                          productList[index].isOffer == "yes",
+                                      isFeatured:
+                                          productList[index].isFeature == "yes",
+                                      actualPrice:
+                                          productList[index].actualAmount,
+                                      price: productList[index].sellingAmount,
+                                      offerPercent:
+                                          productList[index].offerAmount,
+                                      categoryName:
+                                          productList[index].shopCategoryName,
+                                      productId: productList[index].productId,
+                                      areaName: productList[index].shopArea,
+                                      rating: productList[index].avgRatings ==
+                                              "0"
+                                          ? "-"
+                                          : productList[index + 1].avgRatings,
+                                      isOfferTypePercent:
+                                          productList[index].offerType ==
+                                              "percentage",
+                                    )),
+                          ),
+                  ],
+                ),
               ),
             ),
     );
@@ -311,7 +329,7 @@ class NearbyItem extends StatelessWidget {
       actualPrice,
       offerPercent,
       productId;
-  final bool isOffer, isFeatured;
+  final bool isOffer, isFeatured, isOfferTypePercent;
 
   const NearbyItem(
       {this.imagePath,
@@ -322,7 +340,8 @@ class NearbyItem extends StatelessWidget {
       this.actualPrice,
       this.isFeatured,
       this.offerPercent,
-      this.productId});
+      this.productId,
+      this.isOfferTypePercent});
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +379,7 @@ class NearbyItem extends StatelessWidget {
                         visible: isFeatured,
                         child: Positioned(
                           top: 2.0,
-                          right: 2.0,
+                          left: 2.0,
                           child: Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15.0),
@@ -401,11 +420,11 @@ class NearbyItem extends StatelessWidget {
                             child: Padding(
                               padding: const EdgeInsets.all(4.0),
                               child: Text(
-                                "$offerPercent% OFF",
+                                isOfferTypePercent
+                                    ? "$offerPercent% OFF"
+                                    : "₹$offerPercent OFF",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    fontSize: 12.0),
+                                    color: Colors.white, fontSize: 12.0),
                               ),
                             ),
                             color: ThemeColors.themeOrange,
@@ -495,7 +514,7 @@ class AllProductsItem extends StatelessWidget {
       areaName,
       rating,
       actualPrice;
-  final bool isOffer, isFeatured;
+  final bool isOffer, isFeatured, isOfferTypePercent;
 
   const AllProductsItem(
       {this.imagePath,
@@ -508,7 +527,8 @@ class AllProductsItem extends StatelessWidget {
       this.isOffer,
       this.isFeatured,
       this.areaName,
-      this.rating});
+      this.rating,
+      this.isOfferTypePercent});
 
   @override
   Widget build(BuildContext context) {
@@ -524,229 +544,236 @@ class AllProductsItem extends StatelessWidget {
                 ),
               ));
         },
-        child: Container(
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.max,
-              children: <Widget>[
-                Expanded(
-                    flex: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            height: 110.0,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Stack(
+        child: ClipRRect(
+          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          child: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Expanded(
+                      flex: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.all(0.0),
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              height: 110.0,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(5.0),
+                                    bottomLeft: Radius.circular(5.0)),
+                                child: Stack(
+                                  children: <Widget>[
+                                    Container(
+                                      color: Colors.white,
+                                      child: FadeInImage.memoryNetwork(
+                                        image: imagePath,
+                                        placeholder: kTransparentImage,
+                                        width: double.infinity,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 2.0,
+                              left: 2.0,
+                              child: Visibility(
+                                visible: isFeatured,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 0.0, horizontal: 0.0),
+                                  child: Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15.0),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 0.0, horizontal: 4.0),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: <Widget>[
+                                          Icon(
+                                            Icons.star,
+                                            color: ThemeColors.themeOrange,
+                                            size: 14.0,
+                                          ),
+                                          SizedBox(
+                                            width: 2.0,
+                                          ),
+                                          Text(
+                                            "Featured",
+                                            style: TextStyle(
+                                                fontSize: 12.0,
+                                                color: Colors.black),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: Visibility(
+                                visible: isOffer,
+                                child: Container(
+                                  child: Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2.5),
+                                      child: Text(
+                                        isOfferTypePercent
+                                            ? "$offerPercent% OFF"
+                                            : "₹$offerPercent OFF",
+                                        style: TextStyle(
+                                            fontSize: 12.0,
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                    color: ThemeColors.themeOrange,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  SizedBox(
+                    width: 16.0,
+                  ),
+                  Expanded(
+                    flex: 7,
+                    child: SizedBox(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          SizedBox(
+                            height: 8.0,
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Text(
+                                productName,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 3.0,
+                          ),
+                          Text(
+                            categoryName,
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12.0,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 4.0,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Transform.translate(
+                                offset: Offset(-2.0, 0),
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: ThemeColors.themeOrange,
+                                  size: 16.0,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 2.0,
+                              ),
+                              Text(
+                                areaName,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Divider(
+                            color: Colors.grey[200],
+                            endIndent: 18.0,
+                            thickness: 1.0,
+                          ),
+                          Row(
+                            children: <Widget>[
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  Container(
-                                    color: Colors.grey,
-                                    child: FadeInImage.memoryNetwork(
-                                      image: imagePath,
-                                      placeholder: kTransparentImage,
-                                      width: double.infinity,
-                                      height: 150,
-                                      fit: BoxFit.fill,
+                                  isOffer
+                                      ? Text(
+                                          "₹ $actualPrice",
+                                          style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12.0,
+                                              fontWeight: FontWeight.w700,
+                                              decoration:
+                                                  TextDecoration.lineThrough),
+                                        )
+                                      : SizedBox(),
+                                  Text(
+                                    "₹ $price",
+                                    style: TextStyle(
+                                      color: Colors.grey[800],
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14.0,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 2.0,
-                            left: 2.0,
-                            child: Visibility(
-                              visible: isFeatured,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 0.0, horizontal: 0.0),
-                                child: Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 0.0, horizontal: 4.0),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.star,
-                                          color: ThemeColors.themeOrange,
-                                          size: 14.0,
-                                        ),
-                                        SizedBox(
-                                          width: 2.0,
-                                        ),
-                                        Text(
-                                          "Featured",
-                                          style: TextStyle(
-                                              fontSize: 12.0,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black),
-                                        ),
-                                      ],
+                              Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      FontAwesome.star,
+                                      size: 12.0,
+                                      color: rating == "-"
+                                          ? Colors.grey
+                                          : Colors.amber[700],
                                     ),
-                                  ),
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Visibility(
-                              visible: isOffer,
-                              child: Container(
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                      "$offerPercent% OFF",
+                                    SizedBox(
+                                      width: 4.0,
+                                    ),
+                                    Text(
+                                      rating,
                                       style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.0,
-                                          color: Colors.white),
+                                          color: Colors.grey,
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.w700),
                                     ),
-                                  ),
-                                  color: ThemeColors.themeOrange,
+                                  ],
                                 ),
-                              ),
-                            ),
+                              )
+                            ],
                           ),
                         ],
                       ),
-                    )),
-                SizedBox(
-                  width: 16.0,
-                ),
-                Expanded(
-                  flex: 8,
-                  child: SizedBox(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            Text(
-                              productName,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 3.0,
-                        ),
-                        Text(
-                          categoryName,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12.0,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 4.0,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            Transform.translate(
-                              offset: Offset(-2.0, 0),
-                              child: Icon(
-                                Icons.location_on,
-                                color: ThemeColors.themeOrange,
-                                size: 16.0,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 2.0,
-                            ),
-                            Text(
-                              areaName,
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(
-                          color: Colors.grey[200],
-                          endIndent: 18.0,
-                          thickness: 1.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                isOffer
-                                    ? Text(
-                                        "Rs $actualPrice",
-                                        style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 12.0,
-                                            fontWeight: FontWeight.w700,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      )
-                                    : SizedBox(),
-                                Text(
-                                  "Rs $price",
-                                  style: TextStyle(
-                                    color: Colors.grey[800],
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.0,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 16.0),
-                              child: Row(
-                                children: <Widget>[
-                                  Icon(
-                                    FontAwesome.star,
-                                    size: 12.0,
-                                    color: Colors.amber[700],
-                                  ),
-                                  SizedBox(
-                                    width: 4.0,
-                                  ),
-                                  Text(
-                                    rating,
-                                    style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

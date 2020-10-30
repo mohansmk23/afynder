@@ -13,6 +13,7 @@ import 'package:afynder/screens/signin_screen.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'landing_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _terms = false, isLoading = false;
   String fName, lName, email, mobile, password;
   Response response;
+  String termsUrl = 'http://dev.afynder.com/afynder/termsandconditions';
 
   void signUp() async {
     setState(() {
@@ -241,48 +243,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 CheckboxListTile(
                                   title: InkWell(
                                     onTap: () {
-                                      showAboutDialog(
-                                          context: context,
-                                          applicationName: 'aFynder',
-                                          applicationIcon: Icon(Icons.android),
-                                          applicationVersion: '1.0',
-                                          children: [
-                                            Text(
-                                              "Terms and Conditions",
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15.0,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: 8.0,
-                                            ),
-                                            Text(
-                                              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fringilla convallis turpis, at semper nulla vestibulum eget. Mauris nulla ante, ornare a egestas vel, ultricies a tortor. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris feugiat, odio et commodo tincidunt, sapien nunc rutrum mauris, vitae mattis ipsum diam eget lorem. Nam ut gravida massa. Duis fringilla feugiat risus et luctus. Maecenas rutrum nisi facilisis, egestas enim at, lobortis nibh. Quisque eu enim sed risus congue feugiat in et turpis. Quisque at ultricies ex, eu elementum turpis.",
-                                              style: TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: 16.0,
-                                            ),
-                                            Text(
-                                              "Privacy Policy",
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15.0,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: 8.0,
-                                            ),
-                                            Text(
-                                              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fringilla convallis turpis, at semper nulla vestibulum eget. Mauris nulla ante, ornare a egestas vel, ultricies a tortor. Interdum et malesuada fames ac ante ipsum primis in faucibus. Mauris feugiat, odio et commodo tincidunt, sapien nunc rutrum mauris, vitae mattis ipsum diam eget lorem. Nam ut gravida massa. Duis fringilla feugiat risus et luctus. Maecenas rutrum nisi facilisis, egestas enim at, lobortis nibh. Quisque eu enim sed risus congue feugiat in et turpis. Quisque at ultricies ex, eu elementum turpis.",
-                                              style: TextStyle(
-                                                fontSize: 12.0,
-                                              ),
-                                            ),
-                                          ]);
+                                      launch(termsUrl);
                                     },
                                     child: Wrap(
                                       children: <Widget>[

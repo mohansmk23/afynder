@@ -2,8 +2,8 @@ import 'package:afynder/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class MapMarker extends StatefulWidget {
-  final String offerText;
-  MapMarker(this.offerText);
+  final String offerText, shopName;
+  MapMarker(this.offerText, this.shopName);
 
   @override
   _MapMarkerState createState() => _MapMarkerState();
@@ -34,7 +34,8 @@ class _MapMarkerState extends State<MapMarker> {
                 child: Text(
                   widget.offerText.isNotEmpty
                       ? '${widget.offerText} % OFF'
-                      : 'No Offers',
+                      : widget.shopName,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       color: Colors.green,
                       fontSize: 14.0,

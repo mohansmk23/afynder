@@ -207,6 +207,8 @@ class _WishListState extends State<WishList> with WidgetsBindingObserver {
                               isOffer: product.isOffer == "yes",
                               actualPrice: product.actualAmount,
                               offerPercent: product.offerAmount,
+                              isOfferTypePercent:
+                                  product.offerType == "percentage",
                             ),
                           ),
                         );
@@ -223,7 +225,7 @@ class WishListItem extends StatelessWidget {
       offerPercent,
       productId,
       actualPrice;
-  final bool isOffer;
+  final bool isOffer, isOfferTypePercent;
 
   const WishListItem(
       {this.imagePath,
@@ -233,7 +235,8 @@ class WishListItem extends StatelessWidget {
       this.isOffer,
       this.offerPercent,
       this.actualPrice,
-      this.productId});
+      this.productId,
+      this.isOfferTypePercent});
 
   @override
   Widget build(BuildContext context) {
@@ -263,10 +266,10 @@ class WishListItem extends StatelessWidget {
                             child: Padding(
                               padding: const EdgeInsets.all(4.0),
                               child: Text(
-                                "$offerPercent% OFF",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                                isOfferTypePercent
+                                    ? "$offerPercent% OFF"
+                                    : "₹$offerPercent OFF",
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                             color: ThemeColors.themeOrange,
@@ -304,7 +307,7 @@ class WishListItem extends StatelessWidget {
                       children: <Widget>[
                         isOffer
                             ? Text(
-                                "Rs. $actualPrice",
+                                "₹ $actualPrice",
                                 style: TextStyle(
                                     color: Colors.grey,
                                     fontSize: 14.0,
@@ -312,7 +315,7 @@ class WishListItem extends StatelessWidget {
                               )
                             : SizedBox(),
                         Text(
-                          "Rs. $price",
+                          "₹ $price",
                           style: TextStyle(
                               color: ThemeColors.themeColor5, fontSize: 14.0),
                         ),

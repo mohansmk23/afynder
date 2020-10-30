@@ -74,16 +74,17 @@ class _OfferMapState extends State<OfferMap> {
       if (parsed["status"] == "success") {
         final MapModel model = MapModel.fromJson(parsed);
         merchantList = model.merchantList.toList();
+        print('${merchantList.length} mapmarker');
         for (MerchantList merchant in merchantList) {
-          if (merchant.lng.isNotEmpty && merchant.lat.isNotEmpty) {
-            locations.add(
-                LatLng(double.parse(merchant.lat), double.parse(merchant.lng)));
+          print('${merchant.shopName} mapmarker');
 
-            mapMarkers.add(MapMarker(merchant.offerAmt));
+          locations.add(LatLng(
+              merchant.lng.isNotEmpty ? double.parse(merchant.lat) : 47.1164,
+              merchant.lat.isNotEmpty ? double.parse(merchant.lng) : 101.2996));
 
-            print(merchant.offerAmt);
-          }
+          mapMarkers.add(MapMarker(merchant.offerAmt, merchant.shopName));
         }
+
         MarkerGenerator(mapMarkers, (bitmaps) {
           customMarkers = mapBitmapsToMarkers(bitmaps);
 
@@ -98,11 +99,13 @@ class _OfferMapState extends State<OfferMap> {
         if (!_isAllOfferSelected) {
           showAlertDialog(context);
           isSelected = [false, true];
+          _isAllOfferSelected = true;
+          getMerchantsList();
         }
       }
     } catch (e) {
-      _showSnackBar("Network Error");
-      print(e);
+      //  _showSnackBar("Network Error");
+      print("cskay");
     }
 
     setState(() {
@@ -152,20 +155,27 @@ class _OfferMapState extends State<OfferMap> {
                 context: context,
                 builder: (context) {
                   MerchantList merchant = merchantList[i];
+                  print('${merchant.shopName} bottomsheet');
                   return bottomSheet(
                       context,
                       merchant.merchantId,
-                      merchant.firstName,
-                      merchant.shopCategoryName,
+                      merchant.shopName ?? "",
+                      merchant.shopCategoryName ?? "",
                       merchant.ratingCount,
-                      double.parse(merchant.rating),
+                      double.tryParse(merchant.rating) == null
+                          ? 0.0
+                          : double.parse(merchant.rating),
                       merchant.offerAmt,
                       "",
-                      merchant.offerUntil,
-                      merchant.shopAddress,
-                      double.parse(merchant.lat),
-                      double.parse(merchant.lng),
-                      merchant.shopContactNumber,
+                      merchant.offerUntil ?? "",
+                      merchant.shopAddress ?? "",
+                      double.tryParse(merchant.lat) == null
+                          ? 0.0
+                          : double.parse(merchant.lat),
+                      double.tryParse(merchant.lng) == null
+                          ? 0.0
+                          : double.parse(merchant.lng),
+                      merchant.shopContactNumber ?? "",
                       merchant.isOffer == "yes");
                 });
           }));
@@ -187,18 +197,21 @@ class _OfferMapState extends State<OfferMap> {
           : Stack(
               children: <Widget>[
                 GoogleMap(
+                  myLocationButtonEnabled: true,
+                  myLocationEnabled: true,
                   onMapCreated: _onMapCreated,
                   initialCameraPosition: CameraPosition(
                     target: isLocationFetching
                         ? LatLng(11.0168, 76.9558)
-                        : LatLng(_position.latitude, _position.longitude),
+                        : LatLng(_position.latitude, _position.longitude) ??
+                            LatLng(11.0168, 76.9558),
                     zoom: 10.0,
                   ),
                   markers: customMarkers.toSet(),
                 ),
                 Positioned(
-                  top: 16.0,
-                  right: 16.0,
+                  top: 10.0,
+                  left: 16.0,
                   child: Card(
                     child: ToggleButtons(
                       borderColor: Colors.black,
@@ -476,8 +489,6 @@ showAlertDialog(BuildContext context) {
   );
 
   // set up the AlertDialog
-
-
 
   AlertDialog alert = AlertDialog(
     title: Text("Currently No Offers"),

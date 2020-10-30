@@ -5,6 +5,7 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LandingScreen extends StatefulWidget {
+  static const routeName = "/landingscreen";
   @override
   _LandingScreenState createState() => _LandingScreenState();
 }

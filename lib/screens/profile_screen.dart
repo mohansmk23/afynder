@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
@@ -17,6 +18,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'categories_screen.dart' as categoriesscreen;
@@ -57,20 +59,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  int getRandomNumber() {
+    Random random = new Random();
+    return random.nextInt(100); // from 0 upto 99 included
+  }
+
   Widget getProfileImage() {
     if (isImagePicked && _image != null) {
       return Image.file(
         _image,
-        fit: BoxFit.fill,
+        fit: BoxFit.cover,
       );
     } else {
       return model.shopeeDetails.profileImage == null
           ? Placeholder()
           : FadeInImage.memoryNetwork(
-              image: model.shopeeDetails.profileImage,
+              image:
+                  '${model.shopeeDetails.profileImage}?dummy=${getRandomNumber()}',
               placeholder: kTransparentImage,
               fadeInDuration: Duration(seconds: 1),
-              fit: BoxFit.fill,
+              fit: BoxFit.cover,
             );
     }
   }
@@ -86,10 +94,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       "lastName": lNameController.text,
       "contactNumber": mobileNoController.text,
       "emailId": emailIdController.text,
-      "profileImage":
-          await MultipartFile.fromFile(_image.path, filename: "image.jpg")
+      "profileImage": _image == null
+          ? null
+          : await MultipartFile.fromFile(_image.path, filename: "image.jpg")
     });
 
+    dio.interceptors.add(PrettyDioLogger(requestBody: true));
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -99,6 +109,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print(response);
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
+        // print(parsed);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString(
+            profileImage, parsed["shoppeInformations"]["profileImage"]);
+        print(parsed["shoppeInformations"]["profileImage"]);
+        _showSnackBar("Profile Updated Successfully");
         _status = true;
       } else {
         _showSnackBar(parsed["message"]);
@@ -329,7 +345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               width: 8.0,
                                             ),
                                             Text(
-                                              "${model.shopeeDetails.walletAmount} Rs",
+                                              "${model.shopeeDetails.walletAmount} ₹",
                                               style: TextStyle(
                                                   color: Colors.indigo,
                                                   fontWeight: FontWeight.bold,
@@ -553,6 +569,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       profileTextField(
                                         hint: "First Name",
                                         controller: fNameController,
+                                        isMobile: false,
                                         keyboardType: TextInputType.text,
                                         validator: (value) {
                                           if (value.isEmpty) {
@@ -568,6 +585,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       profileTextField(
                                         hint: "Last Name",
                                         controller: lNameController,
+                                        isMobile: false,
                                         keyboardType: TextInputType.text,
                                         validator: (value) {
                                           if (value.isEmpty) {
@@ -580,6 +598,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       profileTextField(
                                         hint: "E-Mail",
+                                        isMobile: false,
                                         controller: emailIdController,
                                         keyboardType:
                                             TextInputType.emailAddress,
@@ -596,6 +615,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       profileTextField(
                                         hint: "Mobile",
+                                        isMobile: true,
                                         keyboardType: TextInputType.number,
                                         controller: mobileNoController,
                                         validator: (value) {
@@ -628,6 +648,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {String hint,
       TextEditingController controller,
       Function validator,
+      bool isMobile,
       TextInputType keyboardType}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,7 +665,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: controller,
               validator: validator,
               keyboardType: keyboardType,
-              decoration: const InputDecoration(
+              maxLength: isMobile ? 10 : null,
+              decoration: InputDecoration(
+                prefixIcon: isMobile
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Text(
+                          "+91",
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      )
+                    : null,
                 hintText: "",
               ),
               enabled: !_status,

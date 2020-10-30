@@ -181,11 +181,21 @@ class _CategoriesState extends State<Categories> {
                       height: 16.0,
                     ),
                     Text(
-                      'Select Categories',
+                      'Category Preference',
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 22.0,
                           fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(
+                      height: 4.0,
+                    ),
+                    Text(
+                      'Please select the product categories that interests you',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16.0,
+                      ),
                     ),
                     SizedBox(
                       height: 24.0,

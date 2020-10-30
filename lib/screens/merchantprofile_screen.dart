@@ -398,41 +398,45 @@ Widget products(List<ProductList> productList, BuildContext context) {
             offerPercent: productList[index].offerAmount,
             category: productList[index].shopCategoryName,
             productId: productList[index].productId,
+            isOfferTypePercent: productList[index].offerType == "percentage",
           ));
 }
 
 Widget info(MerchantDetailsModel model) {
   return Column(
     children: <Widget>[
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                "INFO",
-                textAlign: TextAlign.start,
-                style: TextStyle(
+      SizedBox(
+        width: double.infinity,
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  "INFO",
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                      color: ThemeColors.themeColor5,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 8.0,
+                ),
+                Text(
+                  model.merchantInformations.description,
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
                     color: ThemeColors.themeColor5,
                     fontSize: 14.0,
-                    fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              Text(
-                model.merchantInformations.description,
-                textAlign: TextAlign.start,
-                style: TextStyle(
-                  color: ThemeColors.themeColor5,
-                  fontSize: 14.0,
+                  ),
                 ),
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-            ],
+                SizedBox(
+                  height: 8.0,
+                ),
+              ],
+            ),
           ),
         ),
       ),

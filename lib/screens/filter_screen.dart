@@ -68,10 +68,10 @@ class _FilterScreenState extends State<FilterScreen> {
     if (widget.filterSelection.priceFrom.isNotEmpty) {
       values = RangeValues(double.parse(widget.filterSelection.priceFrom),
           double.parse(widget.filterSelection.priceTo));
-      labels = RangeLabels("Rs  ${widget.filterSelection.priceFrom}",
-          "Rs ${widget.filterSelection.priceTo}");
-      startLabel = "Rs ${widget.filterSelection.priceFrom}";
-      endLabel = "Rs ${widget.filterSelection.priceTo}";
+      labels = RangeLabels("₹  ${widget.filterSelection.priceFrom}",
+          "₹ ${widget.filterSelection.priceTo}");
+      startLabel = "₹ ${widget.filterSelection.priceFrom}";
+      endLabel = "₹ ${widget.filterSelection.priceTo}";
     } else {}
   }
 
@@ -167,9 +167,9 @@ class _FilterScreenState extends State<FilterScreen> {
     //values = RangeValues(minPrice, maxPrice);
     getCategories();
     values = RangeValues(minPrice, maxPrice);
-    labels = RangeLabels("Rs  ${minPrice.round()}", "Rs ${maxPrice.round()}");
-    startLabel = "Rs ${minPrice.round()}";
-    endLabel = "Rs ${maxPrice.round()}";
+    labels = RangeLabels("₹  ${minPrice.round()}", "₹ ${maxPrice.round()}");
+    startLabel = "₹ ${minPrice.round()}";
+    endLabel = "₹ ${maxPrice.round()}";
     super.initState();
   }
 
@@ -254,9 +254,9 @@ class _FilterScreenState extends State<FilterScreen> {
                           setState(() {
                             values = value;
                             labels = RangeLabels(
-                                "Rs ${value.start}", "Rs ${value.end}");
-                            startLabel = "Rs ${value.start}";
-                            endLabel = "Rs ${value.end}";
+                                "₹ ${value.start}", "₹ ${value.end}");
+                            startLabel = "₹ ${value.start}";
+                            endLabel = "₹ ${value.end}";
                           });
                         },
                       ),
@@ -379,10 +379,10 @@ class _FilterScreenState extends State<FilterScreen> {
                                 selectedCatIds.clear();
                                 sortSelectedPosition = null;
                                 values = RangeValues(minPrice, maxPrice);
-                                labels = RangeLabels("Rs  ${minPrice.round()}",
-                                    "Rs ${maxPrice.round()}");
-                                startLabel = "Rs ${minPrice.round()}";
-                                endLabel = "Rs ${maxPrice.round()}";
+                                labels = RangeLabels("₹  ${minPrice.round()}",
+                                    "₹ ${maxPrice.round()}");
+                                startLabel = "₹ ${minPrice.round()}";
+                                endLabel = "₹ ${maxPrice.round()}";
                               });
                             },
                             shape: RoundedRectangleBorder(

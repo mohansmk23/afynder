@@ -309,6 +309,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         Container(
                           height: MediaQuery.of(context).size.height / 2.1,
                           width: double.infinity,
+                          color: Colors.white,
                           child: Stack(
                             children: <Widget>[
                               PageView.builder(
@@ -318,9 +319,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 itemBuilder: (BuildContext context, int index) {
                                   return FadeInImage.memoryNetwork(
                                     placeholder: kTransparentImage,
-                                    fadeInDuration: Duration(seconds: 1),
+                                    fadeInDuration: Duration(milliseconds: 200),
                                     image: product.productImages[index],
-                                    fit: BoxFit.fill,
+                                    fit: BoxFit.cover,
                                   );
                                 },
                               ),
@@ -453,7 +454,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                       0, 14.0, 0, 2),
                                               child: Text(
                                                 product.isOffer == "yes"
-                                                    ? "Rs. ${product.actualAmount}"
+                                                    ? "₹ ${product.actualAmount}"
                                                     : "",
                                                 style: TextStyle(
                                                   decoration: TextDecoration
@@ -465,7 +466,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                               ),
                                             ),
                                             Text(
-                                              "Rs. ${product.sellingAmount}",
+                                              "₹ ${product.sellingAmount}",
                                               style: TextStyle(
                                                 color: ThemeColors.themeColor5,
                                                 fontSize: 16.0,
@@ -481,7 +482,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                     getAddorRemoveWishlist();
                                                   } else {
                                                     Navigator.pushNamed(
-                                                        context, '/');
+                                                        context,
+                                                        LandingScreen
+                                                            .routeName);
                                                   }
                                                 },
                                                 child: Icon(
@@ -722,7 +725,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                       rateProduct(rating);
                                                     } else {
                                                       Navigator.pushNamed(
-                                                          context, '/');
+                                                          context,
+                                                          LandingScreen
+                                                              .routeName);
                                                     }
                                                   },
                                                   child: Text(
@@ -882,6 +887,10 @@ class _ProductDetailsState extends State<ProductDetails> {
                                           productId: model
                                               .sameMerchantProducts[index]
                                               .productId,
+                                          isOfferTypePercent: model
+                                                  .sameMerchantProducts[index]
+                                                  .offerType ==
+                                              "percentage",
                                         )),
                               ],
                             ),
