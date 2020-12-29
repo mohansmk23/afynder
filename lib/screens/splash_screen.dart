@@ -69,9 +69,9 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Text(
                     'aFynder',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: animation.value,
-                    ),
+                        color: Colors.white,
+                        fontSize: animation.value,
+                        fontFamily: 'courgette'),
                   ),
                 ),
               ),

@@ -10,3 +10,5 @@ const String walletHistory = "/shopee-wallet-history";
 const String updateProfile = "/shopee-profile-upload";
 const String wishListmgmt = "/shopee-product-mgnt";
 const String rateTheProduct = "/shopee-product-mgnt";
+const String searchSuggestion = "/search-key-log";
+const String versionCheck = "/version";

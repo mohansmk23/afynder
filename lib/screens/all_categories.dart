@@ -1,33 +1,25 @@
 import 'dart:convert';
+
+import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
-import 'package:afynder/response_models/category_selection.dart';
-import 'package:afynder/screens/dashboard_screen.dart';
+import 'package:afynder/response_models/filter_selection.dart';
+import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:afynder/constants/api_urls.dart';
+import 'package:provider/provider.dart';
 
-class Categories extends StatefulWidget {
-  static const routeName = "/categories";
-
-  final String fromScreen;
-
-  const Categories({this.fromScreen});
+class AllCategories extends StatefulWidget {
+  static var routeName = 'allcategories';
 
   @override
-  _CategoriesState createState() => _CategoriesState();
+  _AllCategoriesState createState() => _AllCategoriesState();
 }
 
-class _CategoriesState extends State<Categories> {
+class _AllCategoriesState extends State<AllCategories> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
   Response response;
@@ -53,42 +45,6 @@ class _CategoriesState extends State<Categories> {
       if (parsed["status"] == "success") {
         final CategoryModel model = CategoryModel.fromJson(parsed);
         categoryList = model.categoryList.toList();
-        selectedCount = getNoOfSelected(categoryList);
-      } else {
-        _showSnackBar(parsed["message"]);
-      }
-    } catch (e) {
-      _showSnackBar("Network Error");
-      print(e);
-    }
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  void postCategories(CategorySelectionModel model) async {
-    setState(() {
-      isLoading = true;
-    });
-    dio.options.headers["authorization"] =
-        await _sharedPrefManager.getAuthKey();
-
-    try {
-      print(json.encode(model));
-      response = await dio.post(categorySelection, data: json.encode(model));
-      print(response);
-
-      final Map<String, dynamic> parsed = json.decode(response.data);
-      if (parsed["status"] == "success") {
-        if (widget.fromScreen == "profile") {
-          Navigator.pop(context);
-        } else {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-                Dashboard.routeName, (Route<dynamic> route) => false);
-          });
-        }
       } else {
         _showSnackBar(parsed["message"]);
       }
@@ -116,47 +72,6 @@ class _CategoriesState extends State<Categories> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SizedBox(
-            width: double.maxFinite,
-            child: RaisedButton(
-              onPressed: () {
-                //Navigator.pushNamed(context, '/dashboard');
-
-                if (selectedCount != 0) {
-                  final CategorySelectionModel selectionParams =
-                      new CategorySelectionModel();
-                  List<SelectedCategories> categorySelection = [];
-                  for (CategoryList category in categoryList) {
-                    categorySelection.add(SelectedCategories(
-                        categoryId: category.categoryId,
-                        isSelected: category.isSelected));
-                  }
-                  selectionParams.apiMethod = 'CategorySelection';
-                  selectionParams.mobileUniqueCode = mobileUniqueCode;
-                  selectionParams.categories = categorySelection;
-
-                  postCategories(selectionParams);
-                } else {
-                  _showSnackBar("Please Select Atleast one Category");
-                }
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18.0),
-              ),
-              color: ThemeColors.themeOrange,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  "Select $selectedCount categories",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         key: _scaffoldKey,
         backgroundColor: Colors.white,
         body: isLoading
@@ -181,7 +96,7 @@ class _CategoriesState extends State<Categories> {
                       height: 16.0,
                     ),
                     Text(
-                      'Category Preference',
+                      'Product Categories',
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 22.0,
@@ -191,7 +106,7 @@ class _CategoriesState extends State<Categories> {
                       height: 4.0,
                     ),
                     Text(
-                      'Please select the product categories that interests you',
+                      '',
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16.0,
@@ -218,17 +133,24 @@ class _CategoriesState extends State<Categories> {
                                   categoryList[index].isSelected == "yes",
                               catName: categoryList[index].categoryName,
                               onTap: () {
-                                setState(() {
-                                  categoryList[index].isSelected =
-                                      categoryList[index].isSelected == "yes"
-                                          ? "no"
-                                          : "yes";
+                                FilterSelection filterSelection =
+                                    new FilterSelection();
 
-                                  if (categoryList[index].isSelected == "yes")
-                                    selectedCount++;
-                                  else
-                                    selectedCount--;
-                                });
+                                Provider.of<ProductSearchParams>(
+                                        context,
+                                        listen: true)
+                                    .addCategories(Categories(
+                                        categoryName:
+                                            categoryList[index].categoryName,
+                                        categoryId:
+                                            categoryList[index].categoryId));
+
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .changeFilterParams();
+
+                                Navigator.pop(context,
+                                    jsonEncode(filterSelection.toJson()));
                               },
                             )),
                     /*SizedBox(
@@ -289,31 +211,6 @@ class CategoryWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.0)),
-                      child: Padding(
-                          padding: const EdgeInsets.all(0.0),
-                          child: AnimatedOpacity(
-                            opacity: isSelected ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 500),
-                            child: CircleAvatar(
-                              radius: 12.0,
-                              backgroundColor: ThemeColors.themeOrange,
-                              child: Icon(
-                                Icons.check,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )),
-                    ),
-                  ),
-                )
               ],
             ),
           ),
@@ -321,14 +218,4 @@ class CategoryWidget extends StatelessWidget {
       ),
     );
   }
-}
-
-int getNoOfSelected(List<CategoryList> list) {
-  int count = 0;
-
-  for (var category in list) {
-    if (category.isSelected == "yes") count++;
-  }
-
-  return count;
 }

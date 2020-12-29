@@ -30,25 +30,33 @@ class MerchantInformations {
   String listings;
   String firstName;
   String lastName;
-  String dob;
+  var dob;
   String contactNumber;
   String mailId;
+  var description;
   String profileImage;
   String banner1;
   String shopCategoryId;
   String shopCategoryName;
   String shopName;
-  String shopNumber;
+  var shopNumber;
   String shopContactNumber;
   String shopMailId;
-  String description;
-  String website;
+  var website;
   String shopLogo;
   String shopArea;
   String shopCity;
   String shopPincode;
   String shopState;
   String registrationStatus;
+  String address1;
+  String address2;
+  String location;
+  String gstCertificate;
+  String bannerImage3;
+  String bannerImage2;
+  String bannerImage1;
+  ShopTimings shopTimings;
   String lat;
   String lng;
   String gstNumber;
@@ -56,9 +64,10 @@ class MerchantInformations {
   String shopAddress;
   String authKey;
   String rating;
+  String shopFullAddress;
   String ratingCount;
-  String shopOpeningTime;
-  String shopClosingTime;
+  var shopOpeningTime;
+  var shopClosingTime;
   String isOffer;
   String offerUntil;
   String offerAmt;
@@ -72,6 +81,7 @@ class MerchantInformations {
       this.dob,
       this.contactNumber,
       this.mailId,
+      this.description,
       this.profileImage,
       this.banner1,
       this.shopCategoryId,
@@ -80,7 +90,6 @@ class MerchantInformations {
       this.shopNumber,
       this.shopContactNumber,
       this.shopMailId,
-      this.description,
       this.website,
       this.shopLogo,
       this.shopArea,
@@ -88,6 +97,14 @@ class MerchantInformations {
       this.shopPincode,
       this.shopState,
       this.registrationStatus,
+      this.address1,
+      this.address2,
+      this.location,
+      this.gstCertificate,
+      this.bannerImage3,
+      this.bannerImage2,
+      this.bannerImage1,
+      this.shopTimings,
       this.lat,
       this.lng,
       this.gstNumber,
@@ -95,6 +112,7 @@ class MerchantInformations {
       this.shopAddress,
       this.authKey,
       this.rating,
+      this.shopFullAddress,
       this.ratingCount,
       this.shopOpeningTime,
       this.shopClosingTime,
@@ -111,6 +129,7 @@ class MerchantInformations {
     dob = json['dob'];
     contactNumber = json['contactNumber'];
     mailId = json['mailId'];
+    description = json['description'];
     profileImage = json['profileImage'];
     banner1 = json['Banner_1'];
     shopCategoryId = json['shopCategoryId'];
@@ -119,7 +138,6 @@ class MerchantInformations {
     shopNumber = json['shopNumber'];
     shopContactNumber = json['shopContactNumber'];
     shopMailId = json['shopMailId'];
-    description = json['description'];
     website = json['website'];
     shopLogo = json['shopLogo'];
     shopArea = json['shopArea'];
@@ -127,6 +145,16 @@ class MerchantInformations {
     shopPincode = json['shopPincode'];
     shopState = json['shopState'];
     registrationStatus = json['registrationStatus'];
+    address1 = json['address1'];
+    address2 = json['address2'];
+    location = json['location'];
+    gstCertificate = json['gstCertificate'];
+    bannerImage3 = json['bannerImage3'];
+    bannerImage2 = json['bannerImage2'];
+    bannerImage1 = json['bannerImage1'];
+    shopTimings = json['shopTimings'] != null
+        ? new ShopTimings.fromJson(json['shopTimings'])
+        : null;
     lat = json['Lat'];
     lng = json['Lng'];
     gstNumber = json['gstNumber'];
@@ -134,6 +162,7 @@ class MerchantInformations {
     shopAddress = json['ShopAddress'];
     authKey = json['authKey'];
     rating = json['rating'];
+    shopFullAddress = json['shopFullAddress'];
     ratingCount = json['ratingCount'];
     shopOpeningTime = json['shopOpeningTime'];
     shopClosingTime = json['shopClosingTime'];
@@ -152,6 +181,7 @@ class MerchantInformations {
     data['dob'] = this.dob;
     data['contactNumber'] = this.contactNumber;
     data['mailId'] = this.mailId;
+    data['description'] = this.description;
     data['profileImage'] = this.profileImage;
     data['Banner_1'] = this.banner1;
     data['shopCategoryId'] = this.shopCategoryId;
@@ -160,7 +190,6 @@ class MerchantInformations {
     data['shopNumber'] = this.shopNumber;
     data['shopContactNumber'] = this.shopContactNumber;
     data['shopMailId'] = this.shopMailId;
-    data['description'] = this.description;
     data['website'] = this.website;
     data['shopLogo'] = this.shopLogo;
     data['shopArea'] = this.shopArea;
@@ -168,6 +197,16 @@ class MerchantInformations {
     data['shopPincode'] = this.shopPincode;
     data['shopState'] = this.shopState;
     data['registrationStatus'] = this.registrationStatus;
+    data['address1'] = this.address1;
+    data['address2'] = this.address2;
+    data['location'] = this.location;
+    data['gstCertificate'] = this.gstCertificate;
+    data['bannerImage3'] = this.bannerImage3;
+    data['bannerImage2'] = this.bannerImage2;
+    data['bannerImage1'] = this.bannerImage1;
+    if (this.shopTimings != null) {
+      data['shopTimings'] = this.shopTimings.toJson();
+    }
     data['Lat'] = this.lat;
     data['Lng'] = this.lng;
     data['gstNumber'] = this.gstNumber;
@@ -175,12 +214,95 @@ class MerchantInformations {
     data['ShopAddress'] = this.shopAddress;
     data['authKey'] = this.authKey;
     data['rating'] = this.rating;
+    data['shopFullAddress'] = this.shopFullAddress;
     data['ratingCount'] = this.ratingCount;
     data['shopOpeningTime'] = this.shopOpeningTime;
     data['shopClosingTime'] = this.shopClosingTime;
     data['isOffer'] = this.isOffer;
     data['offerUntil'] = this.offerUntil;
     data['offerAmt'] = this.offerAmt;
+    return data;
+  }
+}
+
+class ShopTimings {
+  Monday monday;
+  Monday tuesday;
+  Monday wednesday;
+  Monday thursday;
+  Monday friday;
+  Monday saturday;
+  Monday sunday;
+
+  ShopTimings(
+      {this.monday,
+      this.tuesday,
+      this.wednesday,
+      this.thursday,
+      this.friday,
+      this.saturday,
+      this.sunday});
+
+  ShopTimings.fromJson(Map<String, dynamic> json) {
+    monday =
+        json['monday'] != null ? new Monday.fromJson(json['monday']) : null;
+    tuesday =
+        json['tuesday'] != null ? new Monday.fromJson(json['tuesday']) : null;
+    wednesday = json['wednesday'] != null
+        ? new Monday.fromJson(json['wednesday'])
+        : null;
+    thursday =
+        json['thursday'] != null ? new Monday.fromJson(json['thursday']) : null;
+    friday =
+        json['friday'] != null ? new Monday.fromJson(json['friday']) : null;
+    saturday =
+        json['saturday'] != null ? new Monday.fromJson(json['saturday']) : null;
+    sunday =
+        json['sunday'] != null ? new Monday.fromJson(json['sunday']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (this.monday != null) {
+      data['monday'] = this.monday.toJson();
+    }
+    if (this.tuesday != null) {
+      data['tuesday'] = this.tuesday.toJson();
+    }
+    if (this.wednesday != null) {
+      data['wednesday'] = this.wednesday.toJson();
+    }
+    if (this.thursday != null) {
+      data['thursday'] = this.thursday.toJson();
+    }
+    if (this.friday != null) {
+      data['friday'] = this.friday.toJson();
+    }
+    if (this.saturday != null) {
+      data['saturday'] = this.saturday.toJson();
+    }
+    if (this.sunday != null) {
+      data['sunday'] = this.sunday.toJson();
+    }
+    return data;
+  }
+}
+
+class Monday {
+  String openingTime;
+  String closeingTime;
+
+  Monday({this.openingTime, this.closeingTime});
+
+  Monday.fromJson(Map<String, dynamic> json) {
+    openingTime = json['openingTime'];
+    closeingTime = json['closeingTime'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['openingTime'] = this.openingTime;
+    data['closeingTime'] = this.closeingTime;
     return data;
   }
 }

@@ -3,6 +3,7 @@ class FilterSelection {
   String productId;
   String searchString;
   List<Categories> categories;
+  String listingType;
   String priceFrom;
   String priceTo;
   String sorting;
@@ -13,6 +14,7 @@ class FilterSelection {
       this.productId,
       this.searchString,
       this.categories,
+      this.listingType,
       this.priceFrom,
       this.priceTo,
       this.sorting,
@@ -28,6 +30,7 @@ class FilterSelection {
         categories.add(new Categories.fromJson(v));
       });
     }
+    listingType = json['ListingType'];
     priceFrom = json['priceFrom'];
     priceTo = json['priceTo'];
     sorting = json['sorting'];
@@ -42,6 +45,7 @@ class FilterSelection {
     if (this.categories != null) {
       data['categories'] = this.categories.map((v) => v.toJson()).toList();
     }
+    data['ListingType'] = this.listingType;
     data['priceFrom'] = this.priceFrom;
     data['priceTo'] = this.priceTo;
     data['sorting'] = this.sorting;

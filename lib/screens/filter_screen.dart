@@ -7,7 +7,9 @@ import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
+import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterScreen extends StatefulWidget {
@@ -28,10 +30,11 @@ class _FilterScreenState extends State<FilterScreen> {
   var startLabel;
   var endLabel;
   var sortSelectedPosition;
+  var typeSelectedPosition;
   var themeData;
   var dateRangeValue = "";
-  var minPrice = 100.0;
-  var maxPrice = 100000.0;
+  double minPrice;
+  double maxPrice;
   DateTime fromDate;
   DateTime toDate;
   bool isLoading = true;
@@ -41,8 +44,16 @@ class _FilterScreenState extends State<FilterScreen> {
   FilterSelection selectedOptions = new FilterSelection();
 
   List<String> sortingValues = [
-    "Price High to low",
-    "Price low to high",
+    "Price High to Low",
+    "Price Low to High",
+    "Rating Low to High",
+    "Rating High to Low"
+  ];
+
+  List<String> typeValues = [
+    "Hot Offers",
+    "Featured",
+    "New Additions",
   ];
 
   List<CategoryList> categoryList = [];
@@ -50,28 +61,46 @@ class _FilterScreenState extends State<FilterScreen> {
   List<String> selectedCatIds = [];
 
   void getOldInstance() {
-    if (widget.filterSelection.categories != null &&
-        widget.filterSelection.categories.length > 0) {
-      for (Categories category in widget.filterSelection.categories) {
+    FilterSelection oldSelection =
+        Provider.of<ProductSearchParams>(context, listen: true).filter;
+
+    if (oldSelection.categories != null && oldSelection.categories.length > 0) {
+      for (Categories category in oldSelection.categories) {
         selectedCatIds.add(category.categoryId);
       }
     }
 
-    if (widget.filterSelection.sorting.isNotEmpty) {
-      if (widget.filterSelection.sorting == "priceAsc") {
-        sortSelectedPosition = 1;
-      } else {
+    if (oldSelection.sorting.isNotEmpty) {
+      if (oldSelection.sorting == "priceDesc") {
         sortSelectedPosition = 0;
+      } else if (oldSelection.sorting == "priceAsc") {
+        sortSelectedPosition = 1;
+      } else if (oldSelection.sorting == "ratingAsc") {
+        sortSelectedPosition = 2;
+      } else if (oldSelection.sorting == "ratingDesc") {
+        sortSelectedPosition = 3;
+      } else {
+        sortSelectedPosition = null;
       }
     }
 
-    if (widget.filterSelection.priceFrom.isNotEmpty) {
-      values = RangeValues(double.parse(widget.filterSelection.priceFrom),
-          double.parse(widget.filterSelection.priceTo));
-      labels = RangeLabels("₹  ${widget.filterSelection.priceFrom}",
-          "₹ ${widget.filterSelection.priceTo}");
-      startLabel = "₹ ${widget.filterSelection.priceFrom}";
-      endLabel = "₹ ${widget.filterSelection.priceTo}";
+    if (oldSelection.listingType.isNotEmpty) {
+      if (oldSelection.listingType == "HotOffers") {
+        typeSelectedPosition = 0;
+      } else if (oldSelection.listingType == "Featured") {
+        typeSelectedPosition = 1;
+      } else {
+        typeSelectedPosition = 2;
+      }
+    }
+
+    if (oldSelection.priceFrom.isNotEmpty) {
+      values = RangeValues(double.parse(oldSelection.priceFrom),
+          double.parse(oldSelection.priceTo));
+      labels = RangeLabels(
+          "₹  ${oldSelection.priceFrom}", "₹ ${oldSelection.priceTo}");
+      startLabel = "₹ ${oldSelection.priceFrom}";
+      endLabel = "₹ ${oldSelection.priceTo}";
     } else {}
   }
 
@@ -93,6 +122,13 @@ class _FilterScreenState extends State<FilterScreen> {
       if (parsed["status"] == "success") {
         final CategoryModel model = CategoryModel.fromJson(parsed);
         categoryList = model.categoryList.toList();
+        minPrice = double.parse(model.minMaxList.min);
+        maxPrice = double.parse(model.minMaxList.max);
+        values = RangeValues(minPrice, maxPrice);
+        labels = RangeLabels("₹  ${minPrice.round()}", "₹ ${maxPrice.round()}");
+        startLabel = "₹ ${minPrice.round()}";
+        endLabel = "₹ ${maxPrice.round()}";
+
         getOldInstance();
       } else {
         _showSnackBar(parsed["message"]);
@@ -119,6 +155,14 @@ class _FilterScreenState extends State<FilterScreen> {
     List<Widget> list = new List<Widget>();
     for (var i = 0; i < sortingValues.length; i++) {
       list.add(sortWidget(i));
+    }
+    return list;
+  }
+
+  List<Widget> getTypeList() {
+    List<Widget> list = new List<Widget>();
+    for (var i = 0; i < typeValues.length; i++) {
+      list.add(typeWidget(i));
     }
     return list;
   }
@@ -162,14 +206,30 @@ class _FilterScreenState extends State<FilterScreen> {
     );
   }
 
+  Widget typeWidget(int ageIndex) {
+    return FilterChip(
+      labelStyle: typeSelectedPosition == ageIndex
+          ? TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)
+          : TextStyle(color: Colors.black87),
+      label: Text(typeValues[ageIndex]),
+      selected: typeSelectedPosition == ageIndex,
+      onSelected: (value) {
+        setState(() {
+          if (value) {
+            typeSelectedPosition = ageIndex;
+          } else {
+            typeSelectedPosition = null;
+          }
+        });
+      },
+    );
+  }
+
   @override
   void initState() {
     //values = RangeValues(minPrice, maxPrice);
     getCategories();
-    values = RangeValues(minPrice, maxPrice);
-    labels = RangeLabels("₹  ${minPrice.round()}", "₹ ${maxPrice.round()}");
-    startLabel = "₹ ${minPrice.round()}";
-    endLabel = "₹ ${maxPrice.round()}";
+
     super.initState();
   }
 
@@ -230,11 +290,11 @@ class _FilterScreenState extends State<FilterScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           Text(
-                            startLabel,
+                            startLabel ?? '0',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            endLabel,
+                            endLabel ?? '0',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           )
                         ],
@@ -245,7 +305,7 @@ class _FilterScreenState extends State<FilterScreen> {
                       child: RangeSlider(
                         activeColor: ThemeColors.themeOrange,
                         inactiveColor: Colors.grey,
-                        divisions: 10,
+                        divisions: 100,
                         min: minPrice,
                         max: maxPrice,
                         labels: labels,
@@ -260,6 +320,22 @@ class _FilterScreenState extends State<FilterScreen> {
                           });
                         },
                       ),
+                    ),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Divider(),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Text("Type"),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Wrap(
+                      runSpacing: 6.0,
+                      spacing: 6.0,
+                      children: getTypeList(),
                     ),
                     SizedBox(
                       height: 5,
@@ -317,43 +393,93 @@ class _FilterScreenState extends State<FilterScreen> {
                               FilterSelection filterSelection =
                                   new FilterSelection();
 
-                              filterSelection.apiMethod = "productList";
-                              filterSelection.productId = "";
-                              filterSelection.searchString = "";
-
-                              print(values.start);
-                              print(values.end);
-
-                              if (values.start == 100.0 &&
-                                  values.end == 100000.0) {
-                                filterSelection.priceFrom = "";
-                                filterSelection.priceTo = "";
+                              if (values.start == minPrice &&
+                                  values.end == maxPrice) {
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setPriceFrom('');
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setPriceTo('');
                               } else {
-                                filterSelection.priceFrom =
-                                    values.start.round().toString();
-                                filterSelection.priceTo =
-                                    values.end.round().toString();
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setPriceFrom(
+                                        values.start.round().toString());
+
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setPriceTo(values.end.round().toString());
                               }
 
                               filterSelection.mobileUniqueCode =
                                   mobileUniqueCode;
 
-                              filterSelection.sorting =
-                                  sortSelectedPosition == 1
-                                      ? "priceAsc"
-                                      : sortSelectedPosition == 0
-                                          ? "priceDesc"
-                                          : "";
-                              filterSelection.categories = [];
+                              if (typeSelectedPosition == 0) {
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setListingType('HotOffers');
+                              } else if (typeSelectedPosition == 1) {
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setListingType('Featured');
+                              } else if (typeSelectedPosition == 2) {
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setListingType('NewEdition');
+                              } else {
+                                Provider.of<ProductSearchParams>(context,
+                                        listen: true)
+                                    .setListingType('');
+                              }
+
+                              switch (sortSelectedPosition) {
+                                case 0:
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .setSorting('priceDesc');
+                                  break;
+                                case 1:
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .setSorting('priceAsc');
+                                  break;
+                                case 2:
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .setSorting('ratingAsc');
+                                  break;
+                                case 3:
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .setSorting('ratingDesc');
+                                  break;
+                                default:
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .setSorting('');
+                                  break;
+                              }
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .filter
+                                  .categories = [];
 
                               for (CategoryList category in categoryList) {
                                 if (selectedCatIds
                                     .contains(category.categoryId)) {
-                                  filterSelection.categories.add(Categories(
-                                      categoryName: category.categoryName,
-                                      categoryId: category.categoryId));
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .addCategories(Categories(
+                                          categoryName: category.categoryName,
+                                          categoryId: category.categoryId));
                                 }
                               }
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .changeFilterParams();
 
                               Navigator.pop(context,
                                   jsonEncode(filterSelection.toJson()));

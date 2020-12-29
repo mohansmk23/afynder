@@ -7,10 +7,13 @@ import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/merchant_details.dart';
 import 'package:afynder/response_models/merchant_product_list.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,7 +39,10 @@ class _MerchantProfileState extends State<MerchantProfile>
   MerchantDetailsModel model = new MerchantDetailsModel();
   MerchantProductsModel productsModel = new MerchantProductsModel();
   List<ProductList> productList = [];
+  List<String> bannerImageList = [];
   bool isConnectClicked = false;
+
+  int _selectedIndex = 0;
 
   void getMerchantsDetails() async {
     setState(() {
@@ -57,12 +63,22 @@ class _MerchantProfileState extends State<MerchantProfile>
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
         model = MerchantDetailsModel.fromJson(parsed);
+
+        bannerImageList.add(model.merchantInformations.bannerImage1);
+
+        if (model.merchantInformations.bannerImage2.isNotEmpty) {
+          bannerImageList.add(model.merchantInformations.bannerImage2);
+        }
+        if (model.merchantInformations.bannerImage3.isNotEmpty) {
+          bannerImageList.add(model.merchantInformations.bannerImage3);
+        }
         print(model.toJson());
       } else {
         _showSnackBar(parsed["message"]);
       }
     } catch (e) {
-      _showSnackBar("Network Error");
+      // _showSnackBar("Network Error");
+      print('merchant info');
       print(e);
     }
 
@@ -91,11 +107,12 @@ class _MerchantProfileState extends State<MerchantProfile>
       if (parsed["status"] == "success") {
         productsModel = MerchantProductsModel.fromJson(parsed);
         productList = productsModel.productList.toList();
+        print(model.merchantInformations.rating);
       } else {
         _showSnackBar(parsed["message"]);
       }
     } catch (e) {
-      _showSnackBar("Network Error");
+      print('merchant products');
       print(e);
     }
 
@@ -119,10 +136,17 @@ class _MerchantProfileState extends State<MerchantProfile>
 
   @override
   Widget build(BuildContext context) {
+    _controller.addListener(() {
+      setState(() {
+        _selectedIndex = _controller.index;
+      });
+      print("Selected Index: " + _controller.index.toString());
+    });
+
     return Scaffold(
         extendBodyBehindAppBar: true,
         key: _scaffoldKey,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[200],
         floatingActionButton: Container(
           child: Stack(
             children: <Widget>[
@@ -223,6 +247,19 @@ class _MerchantProfileState extends State<MerchantProfile>
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: CircleAvatar(
+                radius: 0.0,
+                child: Icon(Icons.arrow_back, color: Colors.white),
+                backgroundColor: Colors.black38,
+              ),
+            ),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -236,99 +273,144 @@ class _MerchantProfileState extends State<MerchantProfile>
                       Container(
                         height: 300,
                         child: Container(
+                          color: Colors.white,
                           child: Stack(
                               alignment: Alignment.center,
                               children: <Widget>[
-                                ClipPath(
-                                  child: Container(
-                                      color: Colors.black.withOpacity(0.8)),
-                                  clipper: getClipper(),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: CarouselSlider.builder(
+                                    itemCount: bannerImageList.length,
+                                    itemBuilder:
+                                        (BuildContext context, int itemIndex) =>
+                                            Container(
+                                      width: double.infinity,
+                                      color: Colors.white,
+                                      child: Image.network(
+                                        bannerImageList[itemIndex],
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    options: CarouselOptions(
+                                      height: 200,
+                                      initialPage: 0,
+                                      viewportFraction: 1.0,
+                                      enableInfiniteScroll: true,
+                                      reverse: false,
+                                      autoPlay: true,
+                                      autoPlayInterval: Duration(seconds: 3),
+                                      autoPlayAnimationDuration:
+                                          Duration(milliseconds: 800),
+                                      autoPlayCurve: Curves.fastOutSlowIn,
+                                      enlargeCenterPage: true,
+                                      scrollDirection: Axis.horizontal,
+                                    ),
+                                  ),
                                 ),
                                 Positioned(
-                                  top: 120,
+                                  top: 150,
                                   child: Container(
                                       width: 140.0,
                                       height: 140.0,
                                       child: ClipOval(
-                                        child: FadeInImage.memoryNetwork(
-                                          image: model
-                                              .merchantInformations.shopLogo,
-                                          placeholder: kTransparentImage,
-                                          fadeInDuration: Duration(seconds: 1),
+                                        child: FadeInImage.assetNetwork(
+                                          image: model.merchantInformations
+                                                  .shopLogo ??
+                                              'https://onlinemallfnq.com/wp-content/plugins/yith-woocommerce-multi-vendor-premium/assets/images/shop-placeholder.jpg',
+                                          placeholder: 'assets/loader.gif',
+                                          fadeInDuration:
+                                              Duration(milliseconds: 500),
                                           fit: BoxFit.fill,
                                         ),
                                       ),
                                       decoration: new BoxDecoration(
                                         shape: BoxShape.circle,
+                                        color: Colors.grey,
                                       )),
                                 )
                               ]),
                         ),
                       ),
-                      Text(
-                        model.merchantInformations.shopName,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: ThemeColors.themeColor5,
-                            fontSize: 24.0,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(
-                        height: 8.0,
-                      ),
-                      Text(
-                        model.merchantInformations.shopCategoryName,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16.0,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 24.0,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Column(
-                            children: <Widget>[
-                              Row(
-                                children: <Widget>[
+                      Container(
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(model.merchantInformations.shopName,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: ThemeColors.themeColor5,
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(
+                                    height: 4.0,
+                                  ),
                                   Text(
-                                    model.merchantInformations.rating,
+                                    model.merchantInformations.shopCategoryName,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                        color: ThemeColors.themeColor5,
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold),
+                                      color: Colors.grey,
+                                      fontSize: 14.0,
+                                    ),
                                   ),
-                                  Icon(
-                                    Icons.star,
-                                    color: Colors.yellowAccent,
-                                  )
                                 ],
                               ),
-                              Text(
-                                "${model.merchantInformations.ratingCount} Ratings",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: ThemeColors.themeColor5,
-                                  fontSize: 14.0,
-                                ),
+                              Spacer(),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: <Widget>[
+                                  Row(
+                                    children: <Widget>[
+                                      Text(
+                                        model.merchantInformations
+                                                    .ratingCount ==
+                                                '0'
+                                            ? '-'
+                                            : model.merchantInformations.rating,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: ThemeColors.themeColor5,
+                                            fontSize: 18.0,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Icon(
+                                        Icons.star,
+                                        color: model.merchantInformations
+                                                    .ratingCount ==
+                                                '0'
+                                            ? Colors.grey
+                                            : Colors.yellowAccent,
+                                      )
+                                    ],
+                                  ),
+                                  Text(
+                                    "${model.merchantInformations.ratingCount} Ratings",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: ThemeColors.themeColor5,
+                                      fontSize: 14.0,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                       SizedBox(
-                        height: 16.0,
+                        height: 0.5,
                       ),
                       Card(
                         child: Container(
                           child: TabBar(controller: _controller, tabs: [
                             Tab(
                               child: Text(
-                                "Info",
+                                "Shop Info",
                                 style: TextStyle(color: Colors.black),
                               ),
                             ),
@@ -341,17 +423,13 @@ class _MerchantProfileState extends State<MerchantProfile>
                           ]),
                         ),
                       ),
-                      Container(
-                        height: productList.length % 2 == 0
-                            ? 260 * productList.length / 2
-                            : 260 + 260 * productList.length / 2,
-                        child: TabBarView(
-                          controller: _controller,
-                          children: <Widget>[
-                            info(model),
-                            products(productList, context)
-                          ],
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 18.0),
+                        child: Container(
+                            color: Colors.grey[200],
+                            child: _selectedIndex == 0
+                                ? info(model)
+                                : products(productList, context)),
                       ),
                     ],
                   ),
@@ -405,35 +483,94 @@ Widget products(List<ProductList> productList, BuildContext context) {
 Widget info(MerchantDetailsModel model) {
   return Column(
     children: <Widget>[
+      Visibility(
+        visible: model.merchantInformations.description == null ? false : true,
+        child: SizedBox(
+          width: double.infinity,
+          child: Card(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(
+                        Icons.info,
+                        color: ThemeColors.themeColor5,
+                      ),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Text(
+                        'About Us',
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          color: ThemeColors.themeColor5,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      model.merchantInformations.description ?? '',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: ThemeColors.themeColor5,
+                        fontSize: 14.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       SizedBox(
         width: double.infinity,
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "INFO",
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.location_on,
+                      color: ThemeColors.themeColor5,
+                    ),
+                    SizedBox(
+                      width: 8.0,
+                    ),
+                    Text(
+                      'Address',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: ThemeColors.themeColor5,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.0,
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    model.merchantInformations.shopFullAddress,
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
                       color: ThemeColors.themeColor5,
                       fontSize: 14.0,
-                      fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                Text(
-                  model.merchantInformations.description,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    color: ThemeColors.themeColor5,
-                    fontSize: 14.0,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 8.0,
                 ),
               ],
             ),
@@ -444,66 +581,176 @@ Widget info(MerchantDetailsModel model) {
         width: double.infinity,
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "ADDRESS",
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.access_time,
                       color: ThemeColors.themeColor5,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(
+                      width: 8.0,
+                    ),
+                    Text(
+                      'Operating Hours',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        color: ThemeColors.themeColor5,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.0,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                Text(
-                  model.merchantInformations.shopAddress,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    color: ThemeColors.themeColor5,
-                    fontSize: 14.0,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Monday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Tuesday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Wednesday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Thursday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Friday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Saturday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "Sunday",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0)
+                        ],
+                      ),
+                      SizedBox(
+                        width: 16.0,
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(
+                            "${model.merchantInformations.shopTimings.monday.openingTime} - ${model.merchantInformations.shopTimings.monday.closeingTime} ",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          SizedBox(height: 8.0),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      SizedBox(
-        width: double.infinity,
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "WORKING HOURS",
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                      color: ThemeColors.themeColor5,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 8.0,
-                ),
-                Text(
-                  "${model.merchantInformations.shopOpeningTime} - ${model.merchantInformations.shopClosingTime} }",
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    color: ThemeColors.themeColor5,
-                    fontSize: 14.0,
-                  ),
-                ),
-                SizedBox(
-                  height: 8.0,
                 ),
               ],
             ),
@@ -512,22 +759,4 @@ Widget info(MerchantDetailsModel model) {
       ),
     ],
   );
-}
-
-class getClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = new Path();
-
-    path.lineTo(0.0, size.height);
-    path.lineTo(size.width + 130, 0.0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) {
-    // TODO: implement shouldReclip
-    return true;
-  }
 }

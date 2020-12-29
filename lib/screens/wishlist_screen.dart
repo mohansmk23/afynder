@@ -251,9 +251,9 @@ class WishListItem extends StatelessWidget {
               children: <Widget>[
                 Stack(
                   children: <Widget>[
-                    FadeInImage.memoryNetwork(
+                    FadeInImage.assetNetwork(
                       image: imagePath,
-                      placeholder: kTransparentImage,
+                      placeholder: 'assets/loader.gif',
                       width: double.infinity,
                       height: 150,
                       fit: BoxFit.fitWidth,

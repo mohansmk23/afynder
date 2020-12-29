@@ -302,46 +302,29 @@ Widget bottomSheet(
               children: <Widget>[
                 Row(
                   mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MerchantProfile(
-                              merchantId: merchantId,
+                    Flexible(
+                      flex: 4,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MerchantProfile(
+                                merchantId: merchantId,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        merchantName,
-                        style: TextStyle(
-                            color: ThemeColors.themeColor5,
-                            fontSize: 24.0,
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Spacer(),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MerchantProfile(
-                              merchantId: merchantId,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        "View Products",
-                        style: TextStyle(
-                          color: ThemeColors.themeColor5,
-                          fontSize: 16.0,
-                          decoration: TextDecoration.underline,
+                          );
+                        },
+                        child: Text(
+                          merchantName,
+                          style: TextStyle(
+                              color: ThemeColors.themeColor5,
+                              fontSize: 24.0,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -379,6 +362,27 @@ Widget bottomSheet(
                         color: Colors.grey,
                         fontSize: 16.0,
                         fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    Spacer(),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MerchantProfile(
+                              merchantId: merchantId,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "View Products",
+                        style: TextStyle(
+                          color: ThemeColors.themeColor5,
+                          fontSize: 16.0,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],
@@ -491,9 +495,9 @@ showAlertDialog(BuildContext context) {
   // set up the AlertDialog
 
   AlertDialog alert = AlertDialog(
-    title: Text("Currently No Offers"),
+    title: Text("Currently No Offers!"),
     content: Text(
-        "Sorry ! no offers currently running, stay connected for upcoming offers"),
+        "Sorry! No offers currently running in any store, stay connected and check back later for new offers."),
     actions: [
       okButton,
     ],

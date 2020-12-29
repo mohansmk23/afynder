@@ -108,14 +108,14 @@ class _LandingScreenState extends State<LandingScreen>
                         height: 16.0,
                       ),
                       Text(
-                        'Lorem ipsum dolor sit ',
+                        'One Stop App for All  ',
                         style: TextStyle(
                             color: ThemeColors.themeColor5,
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        'amet, consectetur',
+                        'Your Needs',
                         style: TextStyle(
                             color: ThemeColors.themeColor5,
                             fontSize: 20.0,

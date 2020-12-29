@@ -73,10 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       return model.shopeeDetails.profileImage == null
           ? Placeholder()
-          : FadeInImage.memoryNetwork(
+          : FadeInImage.assetNetwork(
               image:
                   '${model.shopeeDetails.profileImage}?dummy=${getRandomNumber()}',
-              placeholder: kTransparentImage,
+              placeholder: 'assets/profileplaceholder.jpg',
               fadeInDuration: Duration(seconds: 1),
               fit: BoxFit.cover,
             );
@@ -99,7 +99,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : await MultipartFile.fromFile(_image.path, filename: "image.jpg")
     });
 
-    dio.interceptors.add(PrettyDioLogger(requestBody: true));
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -448,12 +447,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               width: 75.0,
                                               height: 75.0,
                                               child: ClipOval(
-                                                child:
-                                                    FadeInImage.memoryNetwork(
+                                                child: FadeInImage.assetNetwork(
                                                   image: model.shopeeDetails
                                                       .profileImage,
                                                   placeholder:
-                                                      kTransparentImage,
+                                                      'assets/loader.gif',
                                                   fadeInDuration:
                                                       Duration(seconds: 1),
                                                   fit: BoxFit.fill,
@@ -532,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               FontAwesome.filter,
                               color: Colors.indigoAccent,
                             ),
-                            title: Text("Category Selection"),
+                            title: Text("Category Preference"),
                             trailing: Icon(Icons.chevron_right),
                           ),
                         ),

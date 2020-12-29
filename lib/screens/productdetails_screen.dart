@@ -122,6 +122,7 @@ class _ProductDetailsState extends State<ProductDetails> {
       final Map<String, dynamic> parsed = json.decode(response.data);
       if (parsed["status"] == "success") {
         getProductDetails();
+        _showSnackBar("Thanks for your rating on this product!");
         product.shopeeRating = rating;
         isRated = true;
       } else {
@@ -222,7 +223,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         child: isConnectClicked ? Icon(Icons.mail) : SizedBox(),
                         onPressed: () {
                           var url =
-                              'sms: ${product.shopContactNumber}?body=Hey i am interested in your product';
+                              'sms: ${product.shopContactNumber}?body=Hey i\'m interested in your product ${product.productName}. Sent via Afynder';
                           launch(url);
                         },
                       ),
@@ -260,6 +261,19 @@ class _ProductDetailsState extends State<ProductDetails> {
           backgroundColor: Colors.transparent,
           title: Text(""),
           elevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: CircleAvatar(
+                radius: 0.0,
+                child: Icon(Icons.arrow_back, color: Colors.white),
+                backgroundColor: Colors.black38,
+              ),
+            ),
+          ),
           actions: <Widget>[
             Visibility(
               visible: product.isOffer == "yes",
@@ -317,11 +331,26 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 controller: controller,
                                 itemCount: product.productImages.length ?? 0,
                                 itemBuilder: (BuildContext context, int index) {
-                                  return FadeInImage.memoryNetwork(
-                                    placeholder: kTransparentImage,
-                                    fadeInDuration: Duration(milliseconds: 200),
-                                    image: product.productImages[index],
+                                  return Image.network(
+                                    product.productImages[index],
                                     fit: BoxFit.cover,
+                                    loadingBuilder: (BuildContext context,
+                                        Widget child,
+                                        ImageChunkEvent loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress
+                                                      .expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes
+                                              : null,
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
@@ -349,7 +378,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(4.0),
                                       child: Text(
-                                        "${product.offerAmount}% OFF",
+                                        product.offerType == 'percentage'
+                                            ? "${product.offerAmount}% OFF"
+                                            : "₹ ${product.offerAmount} OFF",
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white),
@@ -606,73 +637,80 @@ class _ProductDetailsState extends State<ProductDetails> {
                                         ),
                                       )
                                     : SizedBox(),
-                                Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          "Specifications",
-                                          textAlign: TextAlign.start,
-                                          style: TextStyle(
-                                              color: ThemeColors.themeColor5,
-                                              fontSize: 14.0,
-                                              fontWeight: FontWeight.bold),
+                                product.specifications.isNotEmpty
+                                    ? Card(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                "Specifications",
+                                                textAlign: TextAlign.start,
+                                                style: TextStyle(
+                                                    color:
+                                                        ThemeColors.themeColor5,
+                                                    fontSize: 14.0,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              SizedBox(
+                                                height: 10.0,
+                                              ),
+                                              ListView.builder(
+                                                  physics:
+                                                      NeverScrollableScrollPhysics(),
+                                                  padding:
+                                                      EdgeInsets.only(top: 0),
+                                                  shrinkWrap: true,
+                                                  itemCount: product
+                                                      .specifications.length,
+                                                  itemBuilder:
+                                                      (BuildContext ctxt,
+                                                          int index) {
+                                                    return Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      children: <Widget>[
+                                                        Row(
+                                                          children: <Widget>[
+                                                            Expanded(
+                                                                flex: 4,
+                                                                child: Text(
+                                                                  product
+                                                                      .specifications[
+                                                                          index]
+                                                                      .key,
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .grey),
+                                                                )),
+                                                            Expanded(
+                                                                flex: 6,
+                                                                child: Text(
+                                                                  product
+                                                                      .specifications[
+                                                                          index]
+                                                                      .value,
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black),
+                                                                )),
+                                                          ],
+                                                        ),
+                                                        Divider(
+                                                          thickness: 1.0,
+                                                        ),
+                                                      ],
+                                                    );
+                                                  })
+                                            ],
+                                          ),
                                         ),
-                                        SizedBox(
-                                          height: 10.0,
-                                        ),
-                                        ListView.builder(
-                                            physics:
-                                                NeverScrollableScrollPhysics(),
-                                            padding: EdgeInsets.only(top: 0),
-                                            shrinkWrap: true,
-                                            itemCount:
-                                                product.specifications.length,
-                                            itemBuilder:
-                                                (BuildContext ctxt, int index) {
-                                              return Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: <Widget>[
-                                                  Row(
-                                                    children: <Widget>[
-                                                      Expanded(
-                                                          flex: 4,
-                                                          child: Text(
-                                                            product
-                                                                .specifications[
-                                                                    index]
-                                                                .key,
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .grey),
-                                                          )),
-                                                      Expanded(
-                                                          flex: 6,
-                                                          child: Text(
-                                                            product
-                                                                .specifications[
-                                                                    index]
-                                                                .value,
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .black),
-                                                          )),
-                                                    ],
-                                                  ),
-                                                  Divider(
-                                                    thickness: 1.0,
-                                                  ),
-                                                ],
-                                              );
-                                            })
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                      )
+                                    : SizedBox(),
                                 AnimatedCrossFade(
                                   crossFadeState: isRated
                                       ? CrossFadeState.showSecond

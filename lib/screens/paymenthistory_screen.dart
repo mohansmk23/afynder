@@ -115,9 +115,9 @@ class _PaymentHistoryState extends State<PaymentHistory> {
         padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
         child: ListTile(
             leading: ClipOval(
-              child: FadeInImage.memoryNetwork(
+              child: FadeInImage.assetNetwork(
                 image: merchantLogo,
-                placeholder: kTransparentImage,
+                placeholder: 'assets/loader.gif',
               ),
             ),
             title: Text(merchantName),

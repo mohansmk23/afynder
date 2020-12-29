@@ -28,32 +28,32 @@ class MerchantProductsModel {
 }
 
 class ProductList {
-  String productId;
-  String shopId;
-  String merchantId;
-  String shopName;
-  String productName;
-  String productCode;
-  String productDetails;
-  String specifications;
-  String features;
-  String actualAmount;
-  String isOffer;
-  String isFeature;
-  String offerType;
-  String offerAmount;
-  String sellingAmount;
-  String viewCount;
+  var productId;
+  var shopId;
+  var merchantId;
+  var shopName;
+  var productName;
+  var productCode;
+  var productDetails;
+  var specifications;
+  var features;
+  var actualAmount;
+  var isOffer;
+  var isFeature;
+  var offerType;
+  var offerAmount;
+  var sellingAmount;
+  var viewCount;
   List<String> productImages;
-  String shortDescription;
-  String longDescription;
-  String activeStatus;
-  String wishlistStatus;
-  String shopCategoryName;
-  String shopLogo;
-  String merchantName;
-  String createdAt;
-  String updatedAt;
+  var shortDescription;
+  var longDescription;
+  var activeStatus;
+  var wishlistStatus;
+  var shopCategoryName;
+  var shopLogo;
+  var merchantName;
+  var createdAt;
+  var updatedAt;
 
   ProductList(
       {this.productId,
@@ -83,7 +83,7 @@ class ProductList {
       this.createdAt,
       this.updatedAt});
 
-  ProductList.fromJson(Map<String, dynamic> json) {
+  ProductList.fromJson(Map<dynamic, dynamic> json) {
     productId = json['productId'];
     shopId = json['shopId'];
     merchantId = json['merchantId'];

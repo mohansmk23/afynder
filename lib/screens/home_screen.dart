@@ -8,14 +8,22 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/homesccreen_model.dart';
+import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:package_info/package_info.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'all_categories.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function popularCategorySelection;
@@ -107,11 +115,62 @@ class _HomeScreenState extends State<HomeScreen> {
         final HomeScreenModel model = HomeScreenModel.fromJson(parsed);
         newAdditionList = model.productList.toList();
       } else {
-        _showSnackBar(parsed["message"]);
+        //_showSnackBar(parsed["message"]);
       }
     } catch (e) {
       print("error");
       _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void getVersion() async {
+    print(await _sharedPrefManager.getAuthKey());
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+
+    try {
+      Response response = await dio.post(versionCheck, data: {
+        "apiMethod": "getRecentVersion",
+        "mobileUniqueCode": "mohan23"
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+        if (int.parse(packageInfo.buildNumber) <
+            int.parse(parsed['currentVersion'])) {
+          AwesomeDialog(
+              context: context,
+              dialogType: DialogType.INFO,
+              animType: AnimType.BOTTOMSLIDE,
+              dismissOnTouchOutside: false,
+              title: 'New Update Available !',
+              desc:
+                  'You are using older version of aFynder please update to experience latest features',
+              btnCancelOnPress: () {
+                if (parsed['forceUpdate'] == 'yes') {
+                  SystemNavigator.pop();
+                }
+              },
+              btnOkOnPress: () {
+                launch("https://play.google.com/store/apps/details?id=" +
+                    packageInfo.packageName);
+                SystemNavigator.pop();
+              },
+              btnOkText: 'Update')
+            ..show();
+        }
+      } else {
+        //_showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      print("error");
       print(e);
     }
 
@@ -140,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final HomeScreenModel model = HomeScreenModel.fromJson(parsed);
         hotOffers = model.productList.toList();
       } else {
-        _showSnackBar(parsed["message"]);
+        //_showSnackBar(parsed["message"]);
       }
     } catch (e) {
       _showSnackBar("Network Error");
@@ -209,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final CategoryModel model = CategoryModel.fromJson(parsed);
         categoryList = model.categoryList.toList();
       } else {
-        _showSnackBar(parsed["message"]);
+        //_showSnackBar(parsed["message"]);
       }
     } catch (e) {
       _showSnackBar("Network Error");
@@ -236,6 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
     getHotOffers();
     getRecentProducts();
     getCategories();
+    getVersion();
     super.initState();
   }
 
@@ -277,11 +337,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.all(0.0),
-                            child: Text(
-                              "",
-                              style: TextStyle(color: Colors.black),
+                          InkWell(
+                            onTap: () {
+                              FilterSelection filterSelection =
+                                  new FilterSelection();
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .setListingType('NewEdition');
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .changeFilterParams();
+
+                              widget.popularCategorySelection(
+                                jsonEncode(filterSelection.toJson()),
+                              );
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(
+                                "View All",
+                                style: TextStyle(color: Colors.black),
+                              ),
                             ),
                           )
                         ],
@@ -290,27 +369,53 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: EdgeInsets.fromLTRB(16.0, 8.0, 0, 8.0),
                         height: 210,
                         color: Colors.grey[200],
-                        child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: newAdditionList.length,
-                            itemBuilder: (BuildContext ctxt, int index) {
-                              print("${newAdditionList.length} new Addition");
-                              return NewAdditionItem(
-                                imagePath:
-                                    newAdditionList[index].productImages[0],
-                                productName: newAdditionList[index].productName,
-                                isOffer:
-                                    newAdditionList[index].isOffer == "yes",
-                                offerPercent:
-                                    newAdditionList[index].offerAmount,
-                                productId: newAdditionList[index].productId,
-                                isFeatured:
-                                    newAdditionList[index].isFeature == "yes",
-                                isOfferTypePercent:
-                                    newAdditionList[index].offerType ==
-                                        "percentage",
-                              );
-                            }),
+                        child: newAdditionList.length == 0
+                            ? Center(
+                                child: Container(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                          height: 75.0,
+                                          width: 75.0,
+                                          child: Image.asset(
+                                              'assets/nonewadditions.png')),
+                                      SizedBox(
+                                        height: 16.0,
+                                      ),
+                                      Text(
+                                        'No new products found!',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: newAdditionList.length,
+                                itemBuilder: (BuildContext ctxt, int index) {
+                                  print(
+                                      "${newAdditionList.length} new Addition");
+                                  return NewAdditionItem(
+                                    imagePath:
+                                        newAdditionList[index].productImages[0],
+                                    productName:
+                                        newAdditionList[index].productName,
+                                    isOffer:
+                                        newAdditionList[index].isOffer == "yes",
+                                    offerPercent:
+                                        newAdditionList[index].offerAmount,
+                                    productId: newAdditionList[index].productId,
+                                    isFeatured:
+                                        newAdditionList[index].isFeature ==
+                                            "yes",
+                                    isOfferTypePercent:
+                                        newAdditionList[index].offerType ==
+                                            "percentage",
+                                  );
+                                }),
                       ),
                       SizedBox(
                         height: 12.0,
@@ -327,11 +432,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.all(0.0),
-                            child: Text(
-                              "",
-                              style: TextStyle(color: Colors.black),
+                          InkWell(
+                            onTap: () {
+                              FilterSelection filterSelection =
+                                  new FilterSelection();
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .setListingType('HotOffers');
+
+                              Provider.of<ProductSearchParams>(context,
+                                      listen: true)
+                                  .changeFilterParams();
+
+                              widget.popularCategorySelection(
+                                jsonEncode(filterSelection.toJson()),
+                              );
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(
+                                "View All",
+                                style: TextStyle(color: Colors.black),
+                              ),
                             ),
                           )
                         ],
@@ -344,7 +468,33 @@ class _HomeScreenState extends State<HomeScreen> {
                             controller: PageController(
                                 viewportFraction: 0.9, keepPage: false),
                             scrollDirection: Axis.horizontal,
-                            children: generateHotOfferItems(),
+                            children: hotOffers.length == 0
+                                ? [
+                                    Center(
+                                      child: Container(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                                height: 75.0,
+                                                width: 75.0,
+                                                child: Image.asset(
+                                                    'assets/nooffers.png')),
+                                            SizedBox(
+                                              height: 16.0,
+                                            ),
+                                            Text(
+                                              'No products with offers Found',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ]
+                                : generateHotOfferItems(),
                           ),
                         ),
                       ),
@@ -360,11 +510,33 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.all(0.0),
-                            child: Text(
-                              "",
-                              style: TextStyle(color: Colors.black),
+                          InkWell(
+                            onTap: () async {
+                              var filterSelection = await Navigator.pushNamed(
+                                  context, AllCategories.routeName);
+                              if (filterSelection != null) {
+                                final Map<String, dynamic> parsed =
+                                    json.decode(filterSelection);
+
+                                final FilterSelection selection =
+                                    FilterSelection.fromJson(parsed);
+                                print(selection);
+
+                                widget.popularCategorySelection(
+                                  jsonEncode(selection.toJson()),
+                                );
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(0.0),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text(
+                                  "View All",
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
                             ),
                           )
                         ],
@@ -374,30 +546,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 150,
                         child: ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            itemCount:
-                                categoryList.isEmpty ? 0 : categoryList.length,
+                            itemCount: categoryList.length > 6
+                                ? 6
+                                : categoryList.length,
                             itemBuilder: (BuildContext ctxt, int index) {
                               return InkWell(
                                 onTap: () {
                                   FilterSelection filterSelection =
                                       new FilterSelection();
 
-                                  filterSelection.apiMethod = "productList";
-                                  filterSelection.productId = "";
-                                  filterSelection.searchString = "";
-                                  filterSelection.priceFrom = "";
-                                  filterSelection.priceTo = "";
-                                  filterSelection.mobileUniqueCode =
-                                      mobileUniqueCode;
+                                  Provider.of<ProductSearchParams>(
+                                          context,
+                                          listen: true)
+                                      .addCategories(Categories(
+                                          categoryName:
+                                              categoryList[index].categoryName,
+                                          categoryId:
+                                              categoryList[index].categoryId));
 
-                                  filterSelection.sorting = "";
-                                  filterSelection.categories = [];
-
-                                  filterSelection.categories.add(Categories(
-                                      categoryName:
-                                          categoryList[index].categoryName,
-                                      categoryId:
-                                          categoryList[index].categoryId));
+                                  Provider.of<ProductSearchParams>(context,
+                                          listen: true)
+                                      .changeFilterParams();
 
                                   widget.popularCategorySelection(
                                     jsonEncode(filterSelection.toJson()),
@@ -438,30 +607,37 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(16.0, 8.0, 0, 8.0),
-                        height: 210,
-                        child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: recentProducts.isEmpty
-                                ? 0
-                                : recentProducts.length,
-                            itemBuilder: (BuildContext ctxt, int index) {
-                              return NewAdditionItem(
-                                imagePath:
-                                    recentProducts[index].productImages[0],
-                                productName: recentProducts[index].productName,
-                                isOffer: recentProducts[index].isOffer == "yes",
-                                offerPercent: recentProducts[index].offerAmount,
-                                productId: recentProducts[index].productId,
-                                isFeatured:
-                                    recentProducts[index].isFeature == "yes",
-                                isOfferTypePercent:
-                                    recentProducts[index].offerType ==
-                                        "percentage",
-                              );
-                            }),
-                      ),
+                      isRecentProductsAvailable
+                          ? Container(
+                              padding: EdgeInsets.fromLTRB(16.0, 8.0, 0, 8.0),
+                              height: 210,
+                              child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: recentProducts.isEmpty
+                                      ? 0
+                                      : recentProducts.length,
+                                  itemBuilder: (BuildContext ctxt, int index) {
+                                    return NewAdditionItem(
+                                      imagePath: recentProducts[index]
+                                          .productImages[0],
+                                      productName:
+                                          recentProducts[index].productName,
+                                      isOffer: recentProducts[index].isOffer ==
+                                          "yes",
+                                      offerPercent:
+                                          recentProducts[index].offerAmount,
+                                      productId:
+                                          recentProducts[index].productId,
+                                      isFeatured:
+                                          recentProducts[index].isFeature ==
+                                              "yes",
+                                      isOfferTypePercent:
+                                          recentProducts[index].offerType ==
+                                              "percentage",
+                                    );
+                                  }),
+                            )
+                          : SizedBox(),
                     ],
                   ),
                 ),
@@ -489,10 +665,10 @@ class PopularCategoryItem extends StatelessWidget {
             clipBehavior: Clip.antiAliasWithSaveLayer,
             child: Stack(
               children: <Widget>[
-                FadeInImage.memoryNetwork(
-                  fadeInDuration: Duration(seconds: 1),
+                FadeInImage.assetNetwork(
+                  fadeInDuration: Duration(milliseconds: 500),
                   image: imagePath,
-                  placeholder: kTransparentImage,
+                  placeholder: 'assets/loader.gif',
                   width: double.infinity,
                   height: double.infinity,
                   fit: BoxFit.fill,
@@ -586,9 +762,9 @@ class HotOffersItem extends StatelessWidget {
                               children: <Widget>[
                                 Container(
                                   color: Colors.white,
-                                  child: FadeInImage.memoryNetwork(
+                                  child: FadeInImage.assetNetwork(
                                     image: imagePath,
-                                    placeholder: kTransparentImage,
+                                    placeholder: 'assets/loader.gif',
                                     width: double.infinity,
                                     height: double.infinity,
                                     fit: BoxFit.cover,
@@ -664,15 +840,15 @@ class HotOffersItem extends StatelessWidget {
                       ],
                     )),
                 SizedBox(
-                  width: 16.0,
+                  width: 8.0,
                 ),
                 Expanded(
                   flex: 7,
                   child: SizedBox(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
                       children: <Widget>[
                         Row(
                           children: <Widget>[
@@ -828,7 +1004,7 @@ class NewAdditionItem extends StatelessWidget {
         },
         child: Card(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(4.0),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 0.0),
               child: Column(
@@ -836,9 +1012,9 @@ class NewAdditionItem extends StatelessWidget {
                 children: <Widget>[
                   Stack(
                     children: <Widget>[
-                      FadeInImage.memoryNetwork(
+                      FadeInImage.assetNetwork(
                         image: imagePath,
-                        placeholder: kTransparentImage,
+                        placeholder: 'assets/loader.gif',
                         width: 150,
                         height: 150,
                         fit: BoxFit.cover,
@@ -868,9 +1044,7 @@ class NewAdditionItem extends StatelessWidget {
                                   ),
                                   Text(
                                     "Featured",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black),
+                                    style: TextStyle(color: Colors.black),
                                   ),
                                 ],
                               ),

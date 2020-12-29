@@ -2,16 +2,24 @@ class CategoryModel {
   String status;
   String message;
   CategoryAllList categoryAllList;
+  MinMaxList minMaxList;
   List<CategoryList> categoryList;
 
   CategoryModel(
-      {this.status, this.message, this.categoryAllList, this.categoryList});
+      {this.status,
+      this.message,
+      this.categoryAllList,
+      this.minMaxList,
+      this.categoryList});
 
   CategoryModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
     categoryAllList = json['categoryAllList'] != null
         ? new CategoryAllList.fromJson(json['categoryAllList'])
+        : null;
+    minMaxList = json['MinMaxList'] != null
+        ? new MinMaxList.fromJson(json['MinMaxList'])
         : null;
     if (json['CategoryList'] != null) {
       categoryList = new List<CategoryList>();
@@ -27,6 +35,9 @@ class CategoryModel {
     data['message'] = this.message;
     if (this.categoryAllList != null) {
       data['categoryAllList'] = this.categoryAllList.toJson();
+    }
+    if (this.minMaxList != null) {
+      data['MinMaxList'] = this.minMaxList.toJson();
     }
     if (this.categoryList != null) {
       data['CategoryList'] = this.categoryList.map((v) => v.toJson()).toList();
@@ -50,10 +61,6 @@ class CategoryAllList {
   String s12;
   String s13;
   String s14;
-  String s15;
-  String s16;
-  String s17;
-  String s18;
 
   CategoryAllList(
       {this.s1,
@@ -69,11 +76,7 @@ class CategoryAllList {
       this.s11,
       this.s12,
       this.s13,
-      this.s14,
-      this.s15,
-      this.s16,
-      this.s17,
-      this.s18});
+      this.s14});
 
   CategoryAllList.fromJson(Map<String, dynamic> json) {
     s1 = json['1'];
@@ -90,10 +93,6 @@ class CategoryAllList {
     s12 = json['12'];
     s13 = json['13'];
     s14 = json['14'];
-    s15 = json['15'];
-    s16 = json['16'];
-    s17 = json['17'];
-    s18 = json['18'];
   }
 
   Map<String, dynamic> toJson() {
@@ -112,10 +111,25 @@ class CategoryAllList {
     data['12'] = this.s12;
     data['13'] = this.s13;
     data['14'] = this.s14;
-    data['15'] = this.s15;
-    data['16'] = this.s16;
-    data['17'] = this.s17;
-    data['18'] = this.s18;
+    return data;
+  }
+}
+
+class MinMaxList {
+  String max;
+  String min;
+
+  MinMaxList({this.max, this.min});
+
+  MinMaxList.fromJson(Map<String, dynamic> json) {
+    max = json['max'];
+    min = json['min'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['max'] = this.max;
+    data['min'] = this.min;
     return data;
   }
 }
@@ -126,6 +140,7 @@ class CategoryList {
   String description;
   String categoryImage;
   String activeStatus;
+  String categoryLogo;
   String createdAt;
   String updatedAt;
   String noOfListing;
@@ -137,6 +152,7 @@ class CategoryList {
       this.description,
       this.categoryImage,
       this.activeStatus,
+      this.categoryLogo,
       this.createdAt,
       this.updatedAt,
       this.noOfListing,
@@ -148,6 +164,7 @@ class CategoryList {
     description = json['description'];
     categoryImage = json['categoryImage'];
     activeStatus = json['activeStatus'];
+    categoryLogo = json['categoryLogo'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     noOfListing = json['noOfListing'];
@@ -161,6 +178,7 @@ class CategoryList {
     data['description'] = this.description;
     data['categoryImage'] = this.categoryImage;
     data['activeStatus'] = this.activeStatus;
+    data['categoryLogo'] = this.categoryLogo;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['noOfListing'] = this.noOfListing;

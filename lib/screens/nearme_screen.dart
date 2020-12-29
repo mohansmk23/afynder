@@ -7,16 +7,17 @@ import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/all_products_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
+import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:afynder/screens/filter_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
-
-import 'home_screen.dart';
 
 class NearMe extends StatefulWidget {
   final categorySelection;
@@ -29,7 +30,7 @@ class NearMe extends StatefulWidget {
 
 class _NearMeState extends State<NearMe> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoading = true, isFiltered = false, isEmptyState = true;
+  bool isFiltered = false;
   String filterParams;
   Response response;
   List<ProductList> productList = [];
@@ -37,35 +38,35 @@ class _NearMeState extends State<NearMe> {
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   void getAllProducts() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    dio.options.headers["authorization"] =
-        await _sharedPrefManager.getAuthKey();
-
-    try {
-      response = await dio.post(allProducts, data: requestModel);
-      print(json.encode(requestModel));
-      print(response);
-      final Map<String, dynamic> parsed = json.decode(response.data);
-      if (parsed["status"] == "success") {
-        final AllProducts model = AllProducts.fromJson(parsed);
-        productList = model.productList.toList();
-        isEmptyState = false;
-      } else {
-        isEmptyState = true;
-        //_showSnackBar(parsed["message"]);
-      }
-    } catch (e) {
-      isEmptyState = true;
-      _showSnackBar("Network Error");
-      print(e);
-    }
-
-    setState(() {
-      isLoading = false;
-    });
+    // setState(() {
+    //   isLoading = true;
+    // });
+    //
+    // dio.options.headers["authorization"] =
+    //     await _sharedPrefManager.getAuthKey();
+    //
+    // try {
+    //   response = await dio.post(allProducts, data: requestModel);
+    //   print(json.encode(requestModel));
+    //   print(response);
+    //   final Map<String, dynamic> parsed = json.decode(response.data);
+    //   if (parsed["status"] == "success") {
+    //     final AllProducts model = AllProducts.fromJson(parsed);
+    //     productList = model.productList.toList();
+    //     // isEmptyState = false;
+    //   } else {
+    //     //  isEmptyState = true;
+    //     //_showSnackBar(parsed["message"]);
+    //   }
+    // } catch (e) {
+    //   // isEmptyState = true;
+    //   _showSnackBar("Network Error");
+    //   print(e);
+    // }
+    //
+    // setState(() {
+    //   //isLoading = false;
+    // });
   }
 
   void _showSnackBar(String message) {
@@ -76,7 +77,7 @@ class _NearMeState extends State<NearMe> {
     );
   }
 
-  List<Widget> getFilteredChips() {
+  List<Widget> getFilteredChips(FilterSelection requestModel) {
     List<Widget> chips = [];
 
     for (Categories category in requestModel.categories) {
@@ -86,13 +87,40 @@ class _NearMeState extends State<NearMe> {
     }
 
     if (requestModel.sorting != "") {
-      print("${chips.length}  sort");
+      String sortText = '';
+
+      switch (requestModel.sorting) {
+        case 'priceAsc':
+          sortText = 'Price Low To High';
+          break;
+        case 'priceDesc':
+          sortText = 'Price High To Low';
+          break;
+        case 'ratingAsc':
+          sortText = 'Rating Low To High';
+          break;
+        case 'ratingDesc':
+          sortText = 'Rating High To Low';
+          break;
+        default:
+          sortText = 'Invalid Sort';
+          break;
+      }
+
       chips.add(filterChipWidget(
-          requestModel.sorting == "priceAsc"
-              ? "Price Low to High"
-              : "Price High to Low",
+          sortText,
           Icon(
             Entypo.price_tag,
+            size: 16.0,
+            color: Colors.white,
+          )));
+    }
+
+    if (requestModel.listingType != "") {
+      chips.add(filterChipWidget(
+          requestModel.listingType,
+          Icon(
+            Icons.star,
             size: 16.0,
             color: Colors.white,
           )));
@@ -117,15 +145,16 @@ class _NearMeState extends State<NearMe> {
             padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 4.0),
             child: InkWell(
               onTap: () {
-                requestModel.apiMethod = "productList";
-                requestModel.productId = "";
-                requestModel.searchString = "";
-                requestModel.categories = [];
-                requestModel.priceTo = "";
-                requestModel.priceFrom = "";
-                requestModel.sorting = "";
+                Provider.of<ProductSearchParams>(context, listen: true)
+                    .clearFilters();
                 isFiltered = false;
-                getAllProducts();
+
+                Provider.of<ProductSearchParams>(context, listen: true)
+                    .changeFilterParams();
+
+                setState(() {});
+
+                // getAllProducts();
               },
               child: Chip(
                 backgroundColor: Colors.indigo,
@@ -133,7 +162,7 @@ class _NearMeState extends State<NearMe> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Text(
-                      "Clear Filters",
+                      "Clear",
                       style: TextStyle(color: Colors.white),
                     ),
                     SizedBox(
@@ -206,7 +235,7 @@ class _NearMeState extends State<NearMe> {
     return Scaffold(
       backgroundColor: Colors.white,
       key: _scaffoldKey,
-      body: isLoading
+      body: Provider.of<ProductSearchParams>(context, listen: true).isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
               color: Colors.grey[200],
@@ -215,14 +244,25 @@ class _NearMeState extends State<NearMe> {
                 child: ListView(
                   children: <Widget>[
                     Container(
-                      height: getFilteredChips().length == 0 ? 0.0 : 50.0,
+                      height: getFilteredChips(Provider.of<ProductSearchParams>(
+                                          context,
+                                          listen: true)
+                                      .filter)
+                                  .length ==
+                              0
+                          ? 0.0
+                          : 50.0,
                       color: Colors.grey[200],
                       child: ListView(
                         shrinkWrap: true,
                         physics: ClampingScrollPhysics(),
                         scrollDirection: Axis.horizontal,
-                        children:
-                            isFiltered ? getFilteredChips() : [SizedBox()],
+                        children: isFiltered
+                            ? getFilteredChips(Provider.of<ProductSearchParams>(
+                                    context,
+                                    listen: true)
+                                .filter)
+                            : [SizedBox()],
                       ),
                     ),
                     Row(
@@ -231,7 +271,7 @@ class _NearMeState extends State<NearMe> {
                           padding: const EdgeInsets.symmetric(
                               vertical: 0.0, horizontal: 12.0),
                           child: Text(
-                            "Todays Picks",
+                            'Today\'s Pick',
                             style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 16.0,
@@ -274,7 +314,8 @@ class _NearMeState extends State<NearMe> {
                         )
                       ],
                     ),
-                    isEmptyState
+                    Provider.of<ProductSearchParams>(context, listen: true)
+                            .isEmptyState
                         ? emptyState()
                         : Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -282,36 +323,40 @@ class _NearMeState extends State<NearMe> {
                                 padding: EdgeInsets.only(bottom: 80.0),
                                 shrinkWrap: true,
                                 physics: ClampingScrollPhysics(),
-                                itemCount: productList.isEmpty
+                                itemCount: Provider.of<ProductSearchParams>(
+                                            context,
+                                            listen: true)
+                                        .productList
+                                        .isEmpty
                                     ? 0
-                                    : productList.length,
-                                itemBuilder: (context, index) =>
-                                    AllProductsItem(
-                                      imagePath:
-                                          productList[index].productImages[0],
-                                      productName:
-                                          productList[index].productName,
-                                      isOffer:
-                                          productList[index].isOffer == "yes",
-                                      isFeatured:
-                                          productList[index].isFeature == "yes",
-                                      actualPrice:
-                                          productList[index].actualAmount,
-                                      price: productList[index].sellingAmount,
-                                      offerPercent:
-                                          productList[index].offerAmount,
-                                      categoryName:
-                                          productList[index].shopCategoryName,
-                                      productId: productList[index].productId,
-                                      areaName: productList[index].shopArea,
-                                      rating: productList[index].avgRatings ==
-                                              "0"
-                                          ? "-"
-                                          : productList[index + 1].avgRatings,
-                                      isOfferTypePercent:
-                                          productList[index].offerType ==
-                                              "percentage",
-                                    )),
+                                    : Provider.of<ProductSearchParams>(context,
+                                            listen: true)
+                                        .productList
+                                        .length,
+                                itemBuilder: (context, index) {
+                                  ProductList product =
+                                      Provider.of<ProductSearchParams>(context,
+                                              listen: true)
+                                          .productList[index];
+
+                                  return AllProductsItem(
+                                    imagePath: product.productImages[0],
+                                    productName: product.productName,
+                                    isOffer: product.isOffer == "yes",
+                                    isFeatured: product.isFeature == "yes",
+                                    actualPrice: product.actualAmount,
+                                    price: product.sellingAmount,
+                                    offerPercent: product.offerAmount,
+                                    categoryName: product.shopCategoryName,
+                                    productId: product.productId,
+                                    areaName: product.shopArea,
+                                    rating: product.avgRatings == "0"
+                                        ? "-"
+                                        : product.avgRatings,
+                                    isOfferTypePercent:
+                                        product.offerType == "percentage",
+                                  );
+                                }),
                           ),
                   ],
                 ),
@@ -368,12 +413,12 @@ class NearbyItem extends StatelessWidget {
                 children: <Widget>[
                   Stack(
                     children: <Widget>[
-                      FadeInImage.memoryNetwork(
+                      FadeInImage.assetNetwork(
                         image: imagePath,
-                        placeholder: kTransparentImage,
+                        placeholder: 'assets/loader.gif',
                         width: double.infinity,
                         height: 160,
-                        fit: BoxFit.fill,
+                        fit: BoxFit.cover,
                       ),
                       Visibility(
                         visible: isFeatured,
@@ -400,9 +445,7 @@ class NearbyItem extends StatelessWidget {
                                   ),
                                   Text(
                                     "Featured",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black),
+                                    style: TextStyle(color: Colors.black),
                                   ),
                                 ],
                               ),
@@ -439,7 +482,7 @@ class NearbyItem extends StatelessWidget {
                       children: <Widget>[
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.max,
                           children: <Widget>[
                             Text(
@@ -545,7 +588,7 @@ class AllProductsItem extends StatelessWidget {
               ));
         },
         child: ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+          borderRadius: BorderRadius.all(Radius.circular(4.0)),
           child: Container(
             color: Colors.white,
             child: Padding(
@@ -571,11 +614,11 @@ class AllProductsItem extends StatelessWidget {
                                   children: <Widget>[
                                     Container(
                                       color: Colors.white,
-                                      child: FadeInImage.memoryNetwork(
+                                      child: FadeInImage.assetNetwork(
                                         image: imagePath,
-                                        placeholder: kTransparentImage,
+                                        placeholder: 'assets/loader.gif',
                                         width: double.infinity,
-                                        height: 150,
+                                        height: double.infinity,
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -649,7 +692,7 @@ class AllProductsItem extends StatelessWidget {
                         ),
                       )),
                   SizedBox(
-                    width: 16.0,
+                    width: 8.0,
                   ),
                   Expanded(
                     flex: 7,

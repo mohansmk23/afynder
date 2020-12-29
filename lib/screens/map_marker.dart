@@ -13,7 +13,7 @@ class _MapMarkerState extends State<MapMarker> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 90.0,
+      width: widget.offerText.isNotEmpty ? 90.0 : 150.0,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -30,7 +30,7 @@ class _MapMarkerState extends State<MapMarker> {
                     topRight: Radius.circular(14))),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.fromLTRB(0.0, 8.0, 0.0, 8.0),
                 child: Text(
                   widget.offerText.isNotEmpty
                       ? '${widget.offerText} % OFF'
