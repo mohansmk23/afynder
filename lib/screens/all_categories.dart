@@ -8,6 +8,8 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/productSearchSelection.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +31,14 @@ class _AllCategoriesState extends State<AllCategories> {
   List<CategoryList> categoryList = [];
 
   void getCategories() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getCategories();
+
+      return;
+    }
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -147,7 +157,7 @@ class _AllCategoriesState extends State<AllCategories> {
 
                                 Provider.of<ProductSearchParams>(context,
                                         listen: true)
-                                    .changeFilterParams();
+                                    .changeFilterParams("1");
 
                                 Navigator.pop(context,
                                     jsonEncode(filterSelection.toJson()));
