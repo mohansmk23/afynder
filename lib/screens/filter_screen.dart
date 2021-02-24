@@ -8,9 +8,12 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/productSearchSelection.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'nointernet_screen.dart';
 
 class FilterScreen extends StatefulWidget {
   static const routeName = "/filters";
@@ -106,8 +109,17 @@ class _FilterScreenState extends State<FilterScreen> {
 
   void getCategories() async {
     setState(() {
-      isLoading = false;
+      isLoading = true;
     });
+
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var returned = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getCategories();
+
+      return;
+    }
 
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
@@ -479,7 +491,7 @@ class _FilterScreenState extends State<FilterScreen> {
 
                               Provider.of<ProductSearchParams>(context,
                                       listen: true)
-                                  .changeFilterParams();
+                                  .changeFilterParams("1");
 
                               Navigator.pop(context,
                                   jsonEncode(filterSelection.toJson()));

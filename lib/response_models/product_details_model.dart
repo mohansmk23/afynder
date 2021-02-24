@@ -1,7 +1,7 @@
 class ProductDetailsModel {
   String status;
   String message;
-  int allCount;
+  var allCount;
   var pageNo;
   String pageNoMsg;
   List<ProductList> productList;

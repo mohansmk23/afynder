@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "204669281963-frs32slt4125efkk6aqtl5ntgsdcau6v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.istrides.afynder",
+            "certificate_hash": "3c3903fb83904f699342b1a43d02c5f41e284711"
+          }
+        },
+        {
           "client_id": "204669281963-7dl8s1el5t1m16ngvbu9h2af7v35mg5r.apps.googleusercontent.com",
           "client_type": 3
         }

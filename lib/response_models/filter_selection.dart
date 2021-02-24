@@ -2,6 +2,8 @@ class FilterSelection {
   String apiMethod;
   String productId;
   String searchString;
+  String pageNo;
+  String apkPageName;
   List<Categories> categories;
   String listingType;
   String priceFrom;
@@ -13,6 +15,8 @@ class FilterSelection {
       {this.apiMethod,
       this.productId,
       this.searchString,
+      this.pageNo,
+      this.apkPageName,
       this.categories,
       this.listingType,
       this.priceFrom,
@@ -24,6 +28,8 @@ class FilterSelection {
     apiMethod = json['apiMethod'];
     productId = json['productId'];
     searchString = json['searchString'];
+    pageNo = json['pageNo'];
+    apkPageName = json['apkPageName'];
     if (json['categories'] != null) {
       categories = new List<Categories>();
       json['categories'].forEach((v) {
@@ -42,6 +48,8 @@ class FilterSelection {
     data['apiMethod'] = this.apiMethod;
     data['productId'] = this.productId;
     data['searchString'] = this.searchString;
+    data['pageNo'] = this.pageNo;
+    data['apkPageName'] = this.apkPageName;
     if (this.categories != null) {
       data['categories'] = this.categories.map((v) => v.toJson()).toList();
     }

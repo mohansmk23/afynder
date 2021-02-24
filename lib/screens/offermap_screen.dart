@@ -13,6 +13,7 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/map_model.dart';
 import 'package:afynder/screens/map_marker.dart';
 import 'package:afynder/screens/merchantprofile_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -26,6 +27,8 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Markergenerator.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'nointernet_screen.dart';
 
 class OfferMap extends StatefulWidget {
   @override
@@ -56,6 +59,15 @@ class _OfferMapState extends State<OfferMap> {
     });
 
     // dio.interceptors.add(PrettyDioLogger());
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var returned = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getMerchantsList();
+      getCurrentLocation();
+
+      return;
+    }
 
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
@@ -82,7 +94,8 @@ class _OfferMapState extends State<OfferMap> {
               merchant.lng.isNotEmpty ? double.parse(merchant.lat) : 47.1164,
               merchant.lat.isNotEmpty ? double.parse(merchant.lng) : 101.2996));
 
-          mapMarkers.add(MapMarker(merchant.offerAmt, merchant.shopName));
+          mapMarkers.add(MapMarker(
+              merchant.offerAmt, merchant.shopName, _isAllOfferSelected));
         }
 
         MarkerGenerator(mapMarkers, (bitmaps) {

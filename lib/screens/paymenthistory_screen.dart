@@ -5,6 +5,8 @@ import 'package:afynder/constants/colors.dart';
 import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/response_models/wallet_history_model.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
@@ -27,6 +29,15 @@ class _PaymentHistoryState extends State<PaymentHistory> {
   DateFormat requiredDateFormat = DateFormat("dd MMMM yyyy");
 
   void getWalletHistory() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getWalletHistory();
+
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -96,7 +107,8 @@ class _PaymentHistoryState extends State<PaymentHistory> {
                       WalletHistory history = walletHistoryList[index];
 
                       return historyCard(
-                          merchantName: history.newMerchantName,
+                          merchantName:
+                              '${history.logDescription} ${history.referarName.isNotEmpty ? '- ${history.referarName} ' : ''}',
                           date: changeDateFormat(history.updatedDate),
                           isCredit: history.action == "add",
                           amount: history.actionAmount,
@@ -111,58 +123,84 @@ class _PaymentHistoryState extends State<PaymentHistory> {
       String amount,
       String merchantLogo}) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
-        child: ListTile(
-            leading: ClipOval(
-              child: FadeInImage.assetNetwork(
-                image: merchantLogo,
-                placeholder: 'assets/loader.gif',
+      child: Container(
+        color: isCredit ? Colors.green[300] : Colors.red[300],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Container(
+              color: Colors.orange,
+              width: 8.0,
+            ),
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: ListTile(
+                    contentPadding: EdgeInsets.all(0.0),
+                    title: Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(merchantName),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(date),
+                    ),
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                isCredit ? "Credit" : "Debit",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 12.0),
+                              ),
+                            ),
+                            color:
+                                isCredit ? Colors.green[300] : Colors.red[300],
+                          ),
+                          SizedBox(
+                            height: 4.0,
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                isCredit ? "+" : "-",
+                                style: TextStyle(
+                                    color: isCredit
+                                        ? Colors.green[300]
+                                        : Colors.red[300]),
+                              ),
+                              Icon(
+                                FontAwesome.rupee,
+                                color: isCredit
+                                    ? Colors.green[300]
+                                    : Colors.red[300],
+                                size: 18.0,
+                              ),
+                              Text(
+                                amount,
+                                style: TextStyle(
+                                  color: isCredit
+                                      ? Colors.green[300]
+                                      : Colors.red[300],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    )),
               ),
             ),
-            title: Text(merchantName),
-            subtitle: Text(date),
-            trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Text(
-                      isCredit ? "Credit" : "Redeem",
-                      style: TextStyle(color: Colors.white, fontSize: 12.0),
-                    ),
-                  ),
-                  color: isCredit ? Colors.green[300] : Colors.red[300],
-                ),
-                SizedBox(
-                  height: 4.0,
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      isCredit ? "+" : "-",
-                      style: TextStyle(
-                          color:
-                              isCredit ? Colors.green[300] : Colors.red[300]),
-                    ),
-                    Icon(
-                      FontAwesome.rupee,
-                      color: isCredit ? Colors.green[300] : Colors.red[300],
-                      size: 18.0,
-                    ),
-                    Text(
-                      "300",
-                      style: TextStyle(
-                        color: isCredit ? Colors.green[300] : Colors.red[300],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            )),
+          ],
+        ),
       ),
     );
   }

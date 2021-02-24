@@ -46,23 +46,27 @@ class MerchantList {
   String merchantId;
   String firstName;
   String lastName;
-  Null dob;
+  var dob;
   String contactNumber;
   String mailId;
   String profileImage;
   String shopCategoryId;
   String shopCategoryName;
   String shopName;
-  Null shopNumber;
+  var shopNumber;
   String shopContactNumber;
   String shopWhatsappNumber;
   String shopMailId;
   String shopLogo;
+  String description;
   String shopArea;
   String shopCity;
   String shopPincode;
   String shopState;
   String registrationStatus;
+  String referalCode;
+  String referenceNumber;
+  String referenceCodeShareContent;
   String gstNumber;
   String shopAddress;
   String authKey;
@@ -71,11 +75,12 @@ class MerchantList {
   String lat;
   String lng;
   String shopLocation;
-  String shopOpeningTime;
-  String shopClosingTime;
+  var shopOpeningTime;
+  var shopClosingTime;
   String isOffer;
   String offerAmt;
   String offerUntil;
+  String offerType;
 
   MerchantList(
       {this.merchantId,
@@ -93,11 +98,15 @@ class MerchantList {
       this.shopWhatsappNumber,
       this.shopMailId,
       this.shopLogo,
+      this.description,
       this.shopArea,
       this.shopCity,
       this.shopPincode,
       this.shopState,
       this.registrationStatus,
+      this.referalCode,
+      this.referenceNumber,
+      this.referenceCodeShareContent,
       this.gstNumber,
       this.shopAddress,
       this.authKey,
@@ -110,7 +119,8 @@ class MerchantList {
       this.shopClosingTime,
       this.isOffer,
       this.offerAmt,
-      this.offerUntil});
+      this.offerUntil,
+      this.offerType});
 
   MerchantList.fromJson(Map<String, dynamic> json) {
     merchantId = json['merchantId'];
@@ -128,11 +138,15 @@ class MerchantList {
     shopWhatsappNumber = json['shopWhatsappNumber'];
     shopMailId = json['shopMailId'];
     shopLogo = json['shopLogo'];
+    description = json['description'];
     shopArea = json['shopArea'];
     shopCity = json['shopCity'];
     shopPincode = json['shopPincode'];
     shopState = json['shopState'];
     registrationStatus = json['registrationStatus'];
+    referalCode = json['referalCode'];
+    referenceNumber = json['referenceNumber'];
+    referenceCodeShareContent = json['referenceCodeShareContent'];
     gstNumber = json['gstNumber'];
     shopAddress = json['ShopAddress'];
     authKey = json['authKey'];
@@ -146,6 +160,7 @@ class MerchantList {
     isOffer = json['isOffer'];
     offerAmt = json['offerAmt'];
     offerUntil = json['offerUntil'];
+    offerType = json['offerType'];
   }
 
   Map<String, dynamic> toJson() {
@@ -165,11 +180,15 @@ class MerchantList {
     data['shopWhatsappNumber'] = this.shopWhatsappNumber;
     data['shopMailId'] = this.shopMailId;
     data['shopLogo'] = this.shopLogo;
+    data['description'] = this.description;
     data['shopArea'] = this.shopArea;
     data['shopCity'] = this.shopCity;
     data['shopPincode'] = this.shopPincode;
     data['shopState'] = this.shopState;
     data['registrationStatus'] = this.registrationStatus;
+    data['referalCode'] = this.referalCode;
+    data['referenceNumber'] = this.referenceNumber;
+    data['referenceCodeShareContent'] = this.referenceCodeShareContent;
     data['gstNumber'] = this.gstNumber;
     data['ShopAddress'] = this.shopAddress;
     data['authKey'] = this.authKey;
@@ -183,6 +202,7 @@ class MerchantList {
     data['isOffer'] = this.isOffer;
     data['offerAmt'] = this.offerAmt;
     data['offerUntil'] = this.offerUntil;
+    data['offerType'] = this.offerType;
     return data;
   }
 }

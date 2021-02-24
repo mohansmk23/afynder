@@ -32,16 +32,18 @@ class ShopeeDetails {
   String userCode;
   String lastName;
   String mailId;
-  Null dob;
+  var dob;
   String contactNumber;
-  Null address;
-  Null gender;
+  var address;
+  var gender;
+  String redeemCode;
   String profileImage;
+  String refQrCode;
   int walletAmount;
   String referenceNumber;
+  String referenceCodeShareContent;
   String userType;
   String wislistCount;
-  String refQrCode;
 
   ShopeeDetails(
       {this.shopeeId,
@@ -55,12 +57,14 @@ class ShopeeDetails {
       this.contactNumber,
       this.address,
       this.gender,
+      this.redeemCode,
       this.profileImage,
+      this.refQrCode,
       this.walletAmount,
       this.referenceNumber,
+      this.referenceCodeShareContent,
       this.userType,
-      this.wislistCount,
-      this.refQrCode});
+      this.wislistCount});
 
   ShopeeDetails.fromJson(Map<String, dynamic> json) {
     shopeeId = json['shopeeId'];
@@ -74,12 +78,14 @@ class ShopeeDetails {
     contactNumber = json['contactNumber'];
     address = json['address'];
     gender = json['gender'];
+    redeemCode = json['RedeemCode'];
     profileImage = json['profileImage'];
+    refQrCode = json['refQrCode'];
     walletAmount = json['walletAmount'];
     referenceNumber = json['referenceNumber'];
+    referenceCodeShareContent = json['referenceCodeShareContent'];
     userType = json['userType'];
     wislistCount = json['wislistCount'];
-    refQrCode = json['refQrCode'];
   }
 
   Map<String, dynamic> toJson() {
@@ -95,12 +101,14 @@ class ShopeeDetails {
     data['contactNumber'] = this.contactNumber;
     data['address'] = this.address;
     data['gender'] = this.gender;
+    data['RedeemCode'] = this.redeemCode;
     data['profileImage'] = this.profileImage;
+    data['refQrCode'] = this.refQrCode;
     data['walletAmount'] = this.walletAmount;
     data['referenceNumber'] = this.referenceNumber;
+    data['referenceCodeShareContent'] = this.referenceCodeShareContent;
     data['userType'] = this.userType;
     data['wislistCount'] = this.wislistCount;
-    data['refQrCode'] = this.refQrCode;
     return data;
   }
 }

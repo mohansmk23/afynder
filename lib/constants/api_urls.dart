@@ -12,3 +12,6 @@ const String wishListmgmt = "/shopee-product-mgnt";
 const String rateTheProduct = "/shopee-product-mgnt";
 const String searchSuggestion = "/search-key-log";
 const String versionCheck = "/version";
+const String socialMediaLogin = "/shopee-social";
+const String forgotPassword = "/shopee-forgetpassword";
+const String interestedProduct = "/shopee-interested-products";

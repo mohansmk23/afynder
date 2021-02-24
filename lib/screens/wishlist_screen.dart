@@ -6,7 +6,9 @@ import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/wishlist_model.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -27,6 +29,14 @@ class _WishListState extends State<WishList> with WidgetsBindingObserver {
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
 
   void getWishList() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getWishList();
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -61,6 +71,12 @@ class _WishListState extends State<WishList> with WidgetsBindingObserver {
   }
 
   void removeWishlist(String productId) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
     setState(() {});
 
     dio.options.headers["authorization"] =
@@ -145,74 +161,47 @@ class _WishListState extends State<WishList> with WidgetsBindingObserver {
               ? Center(child: CircularProgressIndicator())
               : isEmptyState
                   ? emptyState()
-                  : ListView.builder(
+                  : GridView.builder(
                       itemCount: wishList.length,
                       itemBuilder: (BuildContext ctxt, int index) {
                         WishlistProducts product = wishList[index];
-                        return Dismissible(
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (direction) {
-                            wishList.removeAt(index);
-
-                            if (wishList.length == 0) {
-                              isEmptyState = true;
-                            }
-                            removeWishlist(product.productId);
-                          },
-                          background: Container(
-                            alignment: AlignmentDirectional.centerEnd,
-                            color: Colors.red,
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(0.0, 0.0, 32.0, 0.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(
-                                    width: 16.0,
-                                  ),
-                                  Text(
-                                    "Swipe To Remove",
-                                    style: TextStyle(color: Colors.white),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                          key: Key(product.productId),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductDetails(
-                                    productId: product.productId,
-                                  ),
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductDetails(
+                                  productId: product.productId,
                                 ),
-                              ).then((flag) {
-                                if (flag) {
-                                  getWishList();
-                                }
-                              });
-                            },
-                            child: WishListItem(
-                              imagePath: product.productImages[0],
-                              categoryName: product.shopCategoryName,
-                              productName: product.productName,
-                              price: product.sellingAmount,
-                              productId: product.productId,
-                              isOffer: product.isOffer == "yes",
-                              actualPrice: product.actualAmount,
-                              offerPercent: product.offerAmount,
-                              isOfferTypePercent:
-                                  product.offerType == "percentage",
-                            ),
+                              ),
+                            ).then((flag) {
+                              if (flag ?? true) {
+                                getWishList();
+                              }
+                            });
+                          },
+                          child: WishListItem(
+                            imagePath: product.productImages[0],
+                            categoryName: product.shopCategoryName,
+                            productName: product.productName,
+                            price: product.sellingAmount,
+                            productId: product.productId,
+                            isOffer: product.isOffer == "yes",
+                            actualPrice: product.actualAmount,
+                            offerPercent: product.offerAmount,
+                            isOfferTypePercent:
+                                product.offerType == "percentage",
                           ),
                         );
-                      })),
+                      },
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 5.0,
+                        mainAxisSpacing: 5.0,
+                        childAspectRatio: MediaQuery.of(context).size.width /
+                            (MediaQuery.of(context).size.height / 1.8),
+                      ),
+                    )),
     );
   }
 }
@@ -291,35 +280,37 @@ class WishListItem extends StatelessWidget {
                               fontSize: 14.0,
                             ),
                           ),
-                          Text(
-                            categoryName,
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12.0,
-                            ),
+                          SizedBox(
+                            height: 4.0,
+                          ),
+                          Row(
+                            children: [
+                              isOffer
+                                  ? Text(
+                                      "₹ $actualPrice",
+                                      overflow: TextOverflow.clip,
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14.0,
+                                          decoration:
+                                              TextDecoration.lineThrough),
+                                    )
+                                  : SizedBox(),
+                              isOffer
+                                  ? SizedBox(
+                                      width: 4.0,
+                                    )
+                                  : SizedBox(),
+                              Text(
+                                "₹ $price",
+                                style: TextStyle(
+                                    color: ThemeColors.themeColor5,
+                                    fontSize: 14.0),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                    Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        isOffer
-                            ? Text(
-                                "₹ $actualPrice",
-                                style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14.0,
-                                    decoration: TextDecoration.lineThrough),
-                              )
-                            : SizedBox(),
-                        Text(
-                          "₹ $price",
-                          style: TextStyle(
-                              color: ThemeColors.themeColor5, fontSize: 14.0),
-                        ),
-                      ],
                     ),
                     SizedBox(
                       width: 8.0,

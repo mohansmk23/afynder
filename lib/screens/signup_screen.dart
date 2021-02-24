@@ -6,6 +6,7 @@ import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/main.dart';
 import 'package:afynder/screens/categories_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,11 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'landing_screen.dart';
+import 'nointernet_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
+  static var routeName = '/signup';
+
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
@@ -30,6 +34,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String termsUrl = 'http://dev.afynder.com/afynder/termsandconditions';
 
   void signUp() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -136,7 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         isMobile: false,
                                         validator: (value) {
                                           if (value.isEmpty) {
-                                            return 'Please enter first name';
+                                            return 'Please enter First Name';
                                           } else {
                                             fName = value;
                                           }
@@ -155,7 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         isPassword: false,
                                         validator: (value) {
                                           if (value.isEmpty) {
-                                            return 'Please enter last name';
+                                            return 'Please enter Last Name';
                                           } else {
                                             lName = value;
                                           }
@@ -169,7 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   height: 16.0,
                                 ),
                                 LabelFormField(
-                                  label: 'Email',
+                                  label: 'Email ID',
                                   isPassword: false,
                                   isMobile: false,
                                   keyboardType: TextInputType.emailAddress,
@@ -177,7 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     if (!RegExp(
                                             r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
                                         .hasMatch(value)) {
-                                      return 'Please enter valid email';
+                                      return 'Please enter valid Email ID';
                                     } else {
                                       email = value;
                                     }
@@ -188,13 +198,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   height: 16.0,
                                 ),
                                 LabelFormField(
-                                  label: 'Mobile',
+                                  label: 'Mobile Number',
                                   isMobile: true,
                                   keyboardType: TextInputType.phone,
                                   isPassword: false,
                                   validator: (value) {
                                     if (value.length != 10) {
-                                      return 'Please enter valid mobile number';
+                                      return 'Please enter valid Mobile Number';
                                     } else {
                                       mobile = value;
                                     }
@@ -211,7 +221,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   isPassword: true,
                                   validator: (value) {
                                     if (value.isEmpty) {
-                                      return 'Please enter valid password';
+                                      return 'Please enter valid Password';
                                     } else if (value.toString().length < 8) {
                                       return 'Password must be atleast 8 characters';
                                     } else {
@@ -230,9 +240,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   isPassword: true,
                                   validator: (value) {
                                     if (value.isEmpty) {
-                                      return 'Please enter valid password';
+                                      return 'Please re-enter your Password!';
                                     } else if (value != password) {
-                                      return 'PassWord and confirm password not matching';
+                                      return 'Password and Confirm Password doesn\'t match!';
                                     }
                                     return null;
                                   },
@@ -330,14 +340,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ],
                             ),
                           ),
-                          Center(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/signin');
-                              },
-                              child: Text(
-                                "Already a member? sign in",
-                                textAlign: TextAlign.center,
+                          InkWell(
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/signin'),
+                            child: Container(
+                              padding: EdgeInsets.all(15),
+                              alignment: Alignment.bottomCenter,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Text(
+                                    'Already have an account ?',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    'Login Here',
+                                    style: TextStyle(
+                                        color: Color(0xfff79c4f),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

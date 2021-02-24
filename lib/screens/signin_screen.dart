@@ -5,6 +5,8 @@ import 'package:afynder/constants/connection.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/login_model.dart';
 import 'package:afynder/screens/categories_screen.dart';
+import 'package:afynder/screens/signup_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:afynder/main.dart';
@@ -12,6 +14,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/colors.dart';
 import 'dashboard_screen.dart';
+import 'nointernet_screen.dart';
+import 'forget_password_screen.dart';
 
 class SigninScreen extends StatefulWidget {
   @override
@@ -26,6 +30,12 @@ class _SigninScreenState extends State<SigninScreen> {
   Response response;
 
   void signIn() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -106,10 +116,10 @@ class _SigninScreenState extends State<SigninScreen> {
                         fontFamily: 'pacifico'),
                   ),
                   Text(
-                    'Sign in with email',
+                    'Sign in with your Email ID / Mobile number',
                     style: TextStyle(
                         color: Colors.black,
-                        fontSize: 24.0,
+                        fontSize: 16.0,
                         fontWeight: FontWeight.bold),
                   ),
                   SizedBox(
@@ -120,11 +130,11 @@ class _SigninScreenState extends State<SigninScreen> {
                     child: Column(
                       children: <Widget>[
                         RectFormField(
-                          hint: 'Email',
+                          hint: 'Email ID / Mobile Number',
                           isPassword: false,
                           validator: (value) {
                             if (value.isEmpty) {
-                              return 'Please enter valid email';
+                              return 'Please enter Email ID / Mobile number';
                             } else {
                               email = value;
                             }
@@ -139,7 +149,7 @@ class _SigninScreenState extends State<SigninScreen> {
                           isPassword: true,
                           validator: (value) {
                             if (value.isEmpty) {
-                              return 'Please enter valid password';
+                              return 'Please enter Password';
                             } else {
                               password = value;
                             }
@@ -198,25 +208,47 @@ class _SigninScreenState extends State<SigninScreen> {
                     height: 48.0,
                   ),
                   Center(
-                    child: Text(
-                      "Forgot Password?",
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 24.0,
-                  ),
-                  Center(
                     child: InkWell(
                       onTap: () {
-                        Navigator.pushNamed(context, '/signup');
+                        Navigator.pushNamed(context, ForgotPassword.routeName);
                       },
                       child: Text(
-                        "Not a member? Sign-up now",
+                        "Forgot Password?",
                         textAlign: TextAlign.center,
                       ),
                     ),
-                  )
+                  ),
+                  SizedBox(
+                    height: 12.0,
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.of(context)
+                        .pushReplacementNamed(SignUpScreen.routeName),
+                    child: Container(
+                      padding: EdgeInsets.all(15),
+                      alignment: Alignment.bottomCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            'Don\'t have an account ?',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Register Here',
+                            style: TextStyle(
+                                color: Color(0xfff79c4f),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],

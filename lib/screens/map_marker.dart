@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 class MapMarker extends StatefulWidget {
   final String offerText, shopName;
-  MapMarker(this.offerText, this.shopName);
+  final bool isAllShopSelected;
+  MapMarker(this.offerText, this.shopName, this.isAllShopSelected);
 
   @override
   _MapMarkerState createState() => _MapMarkerState();
@@ -32,9 +33,11 @@ class _MapMarkerState extends State<MapMarker> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(0.0, 8.0, 0.0, 8.0),
                 child: Text(
-                  widget.offerText.isNotEmpty
-                      ? '${widget.offerText} % OFF'
-                      : widget.shopName,
+                  widget.isAllShopSelected
+                      ? widget.shopName
+                      : widget.offerText.isNotEmpty
+                          ? '${widget.offerText} % OFF'
+                          : widget.shopName,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       color: Colors.green,

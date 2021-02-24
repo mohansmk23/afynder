@@ -11,17 +11,22 @@ import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/merchant_details.dart';
 import 'package:afynder/response_models/profile_info.dart';
 import 'package:afynder/screens/dashboard_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'categories_screen.dart' as categoriesscreen;
+import 'nointernet_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   static const String routeName = '/profile';
@@ -84,6 +89,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> updateProfileInfo() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -129,12 +140,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void getProfileDetails() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rteurned = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getProfileDetails();
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
 
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
+    dio.interceptors.add(PrettyDioLogger());
 
     try {
       response = await dio.post(profileInfo, data: {
@@ -185,6 +205,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           actions: <Widget>[
             FlatButton(
+              child: Text('No'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            FlatButton(
               child: Text('Yes'),
               onPressed: () async {
                 _sharedPrefManager.signOutUser();
@@ -192,12 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.of(context).pushNamedAndRemoveUntil(
                       Dashboard.routeName, (Route<dynamic> route) => false);
                 });
-              },
-            ),
-            FlatButton(
-              child: Text('No'),
-              onPressed: () {
-                Navigator.pop(context);
               },
             ),
           ],
@@ -263,50 +283,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: new Column(
                             children: <Widget>[
                               Padding(
-                                padding: EdgeInsets.only(top: 20.0),
-                                child: new Stack(
-                                    fit: StackFit.loose,
+                                padding: EdgeInsets.only(top: 20.0, left: 16.0),
+                                child:
+                                    new Stack(fit: StackFit.loose, children: <
+                                        Widget>[
+                                  new Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
-                                      new Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Container(
-                                              width: 140.0,
-                                              height: 140.0,
-                                              child: ClipOval(
-                                                  child: getProfileImage()),
-                                              decoration: new BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.blue,
-                                              )),
+                                      Stack(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 24.0),
+                                            child: Container(
+                                                width: 100.0,
+                                                height: 100.0,
+                                                child: ClipOval(
+                                                    child: getProfileImage()),
+                                                decoration: new BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.blue,
+                                                )),
+                                          ),
+                                          Positioned(
+                                            left: 80.0,
+                                            top: 60.0,
+                                            child: new Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: <Widget>[
+                                                InkWell(
+                                                  onTap: () {
+                                                    open_gallery();
+                                                  },
+                                                  child: CircleAvatar(
+                                                    backgroundColor: Colors.red,
+                                                    radius: 16.0,
+                                                    child: new Icon(
+                                                      Icons.camera_alt,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                      Padding(
-                                          padding: EdgeInsets.only(
-                                              top: 90.0, right: 100.0),
-                                          child: new Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
+                                      Divider(),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '${fNameController.text} ${lNameController.text}',
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14.0),
+                                          ),
+                                          SizedBox(
+                                            height: 4.0,
+                                          ),
+                                          Text(
+                                            '${mobileNoController.text}',
+                                            style: TextStyle(
+                                                color: Colors.black54,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14.0),
+                                          ),
+                                          SizedBox(
+                                            height: 8.0,
+                                          ),
+                                          Text(
+                                            'Refferal Code',
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 10.0),
+                                          ),
+                                          Row(
+                                            children: [
+                                              SelectableText(
+                                                model.shopeeDetails
+                                                    .referenceNumber,
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14.0,
+                                                    decoration:
+                                                        TextDecoration.none),
+                                              ),
+                                              SizedBox(
+                                                width: 8.0,
+                                              ),
                                               InkWell(
-                                                onTap: () {
-                                                  open_gallery();
-                                                },
-                                                child: CircleAvatar(
-                                                  backgroundColor: Colors.red,
-                                                  radius: 25.0,
-                                                  child: new Icon(
-                                                    Icons.camera_alt,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              )
+                                                  onTap: () {
+                                                    Clipboard.setData(
+                                                        new ClipboardData(
+                                                            text: model
+                                                                .shopeeDetails
+                                                                .referenceNumber));
+                                                    _showSnackBar(
+                                                        "Your Referral Code Copied!");
+                                                  },
+                                                  child: Icon(
+                                                      Icons.copy_outlined)),
+                                              SizedBox(
+                                                width: 8.0,
+                                              ),
+                                              InkWell(
+                                                  onTap: () {
+                                                    FlutterShare.share(
+                                                      title: "Refferal",
+                                                      text: model.shopeeDetails
+                                                          .referenceCodeShareContent,
+                                                    );
+                                                  },
+                                                  child:
+                                                      Icon(Icons.share_sharp))
                                             ],
-                                          )),
-                                    ]),
+                                          ),
+                                        ],
+                                      ),
+                                      Spacer(),
+                                    ],
+                                  ),
+                                ]),
                               )
                             ],
                           ),
@@ -415,6 +520,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         InkWell(
                           onTap: () {
+                            //  _showSnackBar('Coming soon!');
+
                             Navigator.pushNamed(context, '/paymenthistory');
                           },
                           child: ListTile(
@@ -428,69 +535,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         InkWell(
                           onTap: () {
+                            //_showSnackBar('Coming soon!');
+
                             showGeneralDialog(
                                 barrierColor: Colors.black
-                                    .withOpacity(0.5), //SHADOW EFFECT
+                                    .withOpacity(0.5), //SHADOW EFFECT32
                                 transitionBuilder: (context, a1, a2, widget) {
                                   return Center(
-                                    child: Container(
-                                      height: 400, // USE PROVIDED ANIMATION
-                                      width: 400,
-                                      color: Colors.blueAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 16.0, horizontal: 8.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: <Widget>[
-                                          Container(
-                                              width: 75.0,
-                                              height: 75.0,
-                                              child: ClipOval(
-                                                child: FadeInImage.assetNetwork(
-                                                  image: model.shopeeDetails
-                                                      .profileImage,
-                                                  placeholder:
-                                                      'assets/loader.gif',
-                                                  fadeInDuration:
-                                                      Duration(seconds: 1),
-                                                  fit: BoxFit.fill,
-                                                ),
-                                              ),
-                                              decoration: new BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.blue,
-                                              )),
-                                          SizedBox(
-                                            height: 16.0,
-                                          ),
-                                          Row(
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Container(
+                                          color: Colors.black38,
+                                          width: double.infinity,
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 8.0, horizontal: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: <Widget>[
-                                              Icon(
-                                                Icons.person,
-                                                color: Colors.white,
-                                                size: 16.0,
+                                              InkWell(
+                                                onTap: () {},
+                                                child: QrImage(
+                                                  data: model
+                                                      .shopeeDetails.redeemCode,
+                                                  backgroundColor: Colors.white,
+                                                  version: QrVersions.auto,
+                                                  size: 320.0,
+                                                ),
                                               ),
                                               SizedBox(
-                                                width: 8.0,
+                                                height: 16.0,
                                               ),
-                                              Text(
-                                                model.shopeeDetails.shopeeName,
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16.0,
-                                                    decoration:
-                                                        TextDecoration.none),
-                                              ),
+                                              Material(
+                                                color: Colors.transparent,
+                                                child: Text(
+                                                  'Show this QR code to an aFynder Shop and redeem wallet credits against your bill !',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              )
                                             ],
                                           ),
-                                          SizedBox(
-                                            height: 16.0,
-                                          ),
-                                          Image.network(qrCodePic)
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   );
@@ -730,6 +823,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 textColor: Colors.white,
                 color: Colors.red,
                 onPressed: () {
+                  fNameController.text = model.shopeeDetails.shopeeName;
+                  lNameController.text = model.shopeeDetails.lastName;
+                  emailIdController.text = model.shopeeDetails.mailId;
+                  mobileNoController.text = model.shopeeDetails.contactNumber;
                   setState(() {
                     _status = true;
                     FocusScope.of(context).requestFocus(new FocusNode());

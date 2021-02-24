@@ -8,12 +8,14 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/product_details_model.dart';
 import 'package:afynder/screens/landing_screen.dart';
 import 'package:afynder/screens/merchantprofile_screen.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -38,10 +40,18 @@ class _ProductDetailsState extends State<ProductDetails> {
   Response response;
   ProductDetailsModel model = ProductDetailsModel();
   ProductList product = ProductList();
-  String rating;
+  String rating = '';
   bool isConnectClicked = false;
 
   void getProductDetails() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getProductDetails();
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -76,7 +86,53 @@ class _ProductDetailsState extends State<ProductDetails> {
     });
   }
 
+  void getInterestedDetails() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getInterestedDetails();
+
+      return;
+    }
+    setState(() {
+      isLoading = true;
+    });
+    isSignedIn = await _sharedPrefManager.iSignedIn();
+    dio.options.headers["authorization"] =
+        await _sharedPrefManager.getAuthKey();
+
+    try {
+      response = await dio.post(interestedProduct, data: {
+        "apiMethod": "interestedProduct",
+        "productId": widget.productId,
+        "callFor": "like",
+        "mobileUniqueCode": mobileUniqueCode
+      });
+      print(response);
+      final Map<String, dynamic> parsed = json.decode(response.data);
+      if (parsed["status"] == "success") {
+        print(parsed);
+      } else {
+        // _showSnackBar(parsed["message"]);
+      }
+    } catch (e) {
+      _showSnackBar("Network Error");
+      print(e);
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   void getAddorRemoveWishlist() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
     setState(() {});
 
     dio.options.headers["authorization"] =
@@ -104,6 +160,13 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   void rateProduct(String rating) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -174,6 +237,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                       borderRadius: BorderRadius.circular(18.0),
                     ),
                     onPressed: () {
+                      getInterestedDetails();
                       setState(() {
                         isConnectClicked = !isConnectClicked;
                       });
@@ -317,450 +381,219 @@ class _ProductDetailsState extends State<ProductDetails> {
                 children: <Widget>[
                   Container(
                     color: Colors.grey[200],
-                    child: ListView(
+                    child: SingleChildScrollView(
                       padding: EdgeInsets.only(top: 0, bottom: 36.0),
-                      children: <Widget>[
-                        Container(
-                          height: MediaQuery.of(context).size.height / 2.1,
-                          width: double.infinity,
-                          color: Colors.white,
-                          child: Stack(
-                            children: <Widget>[
-                              PageView.builder(
-                                physics: BouncingScrollPhysics(),
-                                controller: controller,
-                                itemCount: product.productImages.length ?? 0,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Image.network(
-                                    product.productImages[index],
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (BuildContext context,
-                                        Widget child,
-                                        ImageChunkEvent loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress
-                                                      .expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes
-                                              : null,
-                                        ),
+                      child: Column(
+                        children: <Widget>[
+                          Container(
+                            width: double.infinity,
+                            color: Colors.white,
+                            child: AspectRatio(
+                              aspectRatio: 5 / 4,
+                              child: Stack(
+                                children: <Widget>[
+                                  PageView.builder(
+                                    physics: BouncingScrollPhysics(),
+                                    controller: controller,
+                                    onPageChanged: (pos) {
+                                      print(pos);
+                                    },
+                                    itemCount:
+                                        product.productImages.length ?? 0,
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return Image.network(
+                                        product.productImages[index],
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (BuildContext context,
+                                            Widget child,
+                                            ImageChunkEvent loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                          .cumulativeBytesLoaded /
+                                                      loadingProgress
+                                                          .expectedTotalBytes
+                                                  : null,
+                                            ),
+                                          );
+                                        },
                                       );
                                     },
-                                  );
-                                },
-                              ),
-                              Positioned(
-                                bottom: 36.0,
-                                left: 16.0,
-                                child: SmoothPageIndicator(
-                                    controller: controller,
-                                    count: product.productImages.length,
-                                    effect: WormEffect(
-                                        spacing: 4.0,
-                                        radius: 5.0,
-                                        dotWidth: 10.0,
-                                        activeDotColor: Colors.blue,
-                                        dotHeight:
-                                            10.0), // your preferred effect
-                                    onDotClicked: (index) {}),
-                              ),
-                              Visibility(
-                                visible: product.isOffer == "yes",
-                                child: Positioned(
-                                  bottom: 30.0,
-                                  right: 16.0,
-                                  child: Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Text(
-                                        product.offerType == 'percentage'
-                                            ? "${product.offerAmount}% OFF"
-                                            : "₹ ${product.offerAmount} OFF",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white),
+                                  ),
+                                  Positioned(
+                                    bottom: 36.0,
+                                    left: 16.0,
+                                    child: SmoothPageIndicator(
+                                        controller: controller,
+                                        count: product.productImages.length,
+                                        effect: WormEffect(
+                                            spacing: 4.0,
+                                            radius: 5.0,
+                                            dotWidth: 10.0,
+                                            activeDotColor: Colors.blue,
+                                            dotHeight:
+                                                10.0), // your preferred effect
+                                        onDotClicked: (index) {}),
+                                  ),
+                                  Visibility(
+                                    visible: product.isOffer == "yes",
+                                    child: Positioned(
+                                      bottom: 30.0,
+                                      right: 16.0,
+                                      child: Card(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Text(
+                                            product.offerType == 'percentage'
+                                                ? "${product.offerAmount}% OFF"
+                                                : "₹ ${product.offerAmount} OFF",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white),
+                                          ),
+                                        ),
+                                        color: ThemeColors.themeOrange,
                                       ),
                                     ),
-                                    color: ThemeColors.themeOrange,
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        Transform.translate(
-                          offset: const Offset(0.0, -24.0),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(32.0),
-                                  topRight: Radius.circular(32.0)),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(32.0),
-                                        topRight: Radius.circular(32.0)),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 4.0, horizontal: 8.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            SizedBox(
-                                              height: 16.0,
-                                            ),
-                                            Text(
-                                              product.shopCategoryName,
-                                              style: TextStyle(
-                                                color: ThemeColors.themeColor5,
-                                                fontSize: 14.0,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: 2.0,
-                                            ),
-                                            Text(
-                                              product.productName,
-                                              style: TextStyle(
-                                                  color:
-                                                      ThemeColors.themeColor5,
-                                                  fontSize: 18.0,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            SizedBox(
-                                              height: 10.0,
-                                            ),
-                                            Row(
-                                              mainAxisSize: MainAxisSize.max,
+                          ),
+                          Transform.translate(
+                            offset: const Offset(0.0, -24.0),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(32.0),
+                                    topRight: Radius.circular(32.0)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(32.0),
+                                          topRight: Radius.circular(32.0)),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0, horizontal: 8.0),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: <Widget>[
-                                                RatingBarIndicator(
-                                                  rating: double.parse(
-                                                      product.avgRatings),
-                                                  itemBuilder:
-                                                      (context, index) => Icon(
-                                                    Icons.star,
-                                                    color: Colors.amber,
-                                                  ),
-                                                  itemCount: 5,
-                                                  itemSize: 16.0,
-                                                  direction: Axis.horizontal,
+                                                SizedBox(
+                                                  height: 16.0,
                                                 ),
                                                 Text(
-                                                  "${product.noOfRatings} Ratings",
+                                                  product.shopCategoryName,
                                                   style: TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 12.0,
-                                                    fontStyle: FontStyle.italic,
+                                                    color:
+                                                        ThemeColors.themeColor5,
+                                                    fontSize: 14.0,
                                                   ),
+                                                ),
+                                                SizedBox(
+                                                  height: 2.0,
+                                                ),
+                                                Text(
+                                                  product.productName,
+                                                  style: TextStyle(
+                                                      color: ThemeColors
+                                                          .themeColor5,
+                                                      fontSize: 18.0,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                SizedBox(
+                                                  height: 10.0,
+                                                ),
+                                                Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.max,
+                                                  children: <Widget>[
+                                                    RatingBarIndicator(
+                                                      rating: double.parse(
+                                                          product.avgRatings),
+                                                      itemBuilder:
+                                                          (context, index) =>
+                                                              Icon(
+                                                        Icons.star,
+                                                        color: Colors.amber,
+                                                      ),
+                                                      itemCount: 5,
+                                                      itemSize: 16.0,
+                                                      direction:
+                                                          Axis.horizontal,
+                                                    ),
+                                                    Text(
+                                                      "${product.noOfRatings} Ratings",
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 12.0,
+                                                        fontStyle:
+                                                            FontStyle.italic,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ],
                                             ),
-                                          ],
-                                        ),
-                                        Spacer(),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: <Widget>[
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      0, 14.0, 0, 2),
-                                              child: Text(
-                                                product.isOffer == "yes"
-                                                    ? "₹ ${product.actualAmount}"
-                                                    : "",
-                                                style: TextStyle(
-                                                  decoration: TextDecoration
-                                                      .lineThrough,
-                                                  color:
-                                                      ThemeColors.themeColor5,
-                                                  fontSize: 14.0,
-                                                ),
-                                              ),
-                                            ),
-                                            Text(
-                                              "₹ ${product.sellingAmount}",
-                                              style: TextStyle(
-                                                color: ThemeColors.themeColor5,
-                                                fontSize: 16.0,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      0, 8.0, 0, 2),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  if (isSignedIn) {
-                                                    getAddorRemoveWishlist();
-                                                  } else {
-                                                    Navigator.pushNamed(
-                                                        context,
-                                                        LandingScreen
-                                                            .routeName);
-                                                  }
-                                                },
-                                                child: Icon(
-                                                  isWishListed
-                                                      ? Icons.favorite
-                                                      : Icons.favorite_border,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: double.maxFinite,
-                                  child: Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text(
-                                            "Description",
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                                color: ThemeColors.themeColor5,
-                                                fontSize: 14.0,
-                                                fontWeight: FontWeight.bold),
                                           ),
-                                          SizedBox(
-                                            height: 8.0,
-                                          ),
-                                          Text(
-                                            product.shortDescription,
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                              color: ThemeColors.themeColor5,
-                                              fontSize: 14.0,
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            height: 8.0,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                product.features.isNotEmpty
-                                    ? Card(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
+                                          Column(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                                CrossAxisAlignment.end,
                                             children: <Widget>[
-                                              Text(
-                                                "Features",
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                        0, 14.0, 0, 2),
+                                                child: Text(
+                                                  product.isOffer == "yes"
+                                                      ? "₹ ${product.actualAmount}"
+                                                      : "",
+                                                  style: TextStyle(
+                                                    decoration: TextDecoration
+                                                        .lineThrough,
                                                     color:
                                                         ThemeColors.themeColor5,
                                                     fontSize: 14.0,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(
-                                                height: 10.0,
-                                              ),
-                                              ListView.builder(
-                                                  physics:
-                                                      NeverScrollableScrollPhysics(),
-                                                  padding:
-                                                      EdgeInsets.only(top: 0),
-                                                  shrinkWrap: true,
-                                                  itemCount: product
-                                                          .features.isEmpty
-                                                      ? 0
-                                                      : product.features.length,
-                                                  itemBuilder:
-                                                      (BuildContext ctxt,
-                                                          int index) {
-                                                    print(product
-                                                        .features.length);
-
-                                                    return new Column(
-                                                      children: <Widget>[
-                                                        Row(
-                                                          children: <Widget>[
-                                                            Icon(
-                                                              FontAwesome
-                                                                  .circle,
-                                                              size: 8.0,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 8.0,
-                                                            ),
-                                                            Text(
-                                                              product.features[
-                                                                  index],
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      14.0),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        SizedBox(
-                                                          height: 8.0,
-                                                        ),
-                                                      ],
-                                                    );
-                                                  }),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                    : SizedBox(),
-                                product.specifications.isNotEmpty
-                                    ? Card(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Text(
-                                                "Specifications",
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
-                                                    color:
-                                                        ThemeColors.themeColor5,
-                                                    fontSize: 14.0,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(
-                                                height: 10.0,
-                                              ),
-                                              ListView.builder(
-                                                  physics:
-                                                      NeverScrollableScrollPhysics(),
-                                                  padding:
-                                                      EdgeInsets.only(top: 0),
-                                                  shrinkWrap: true,
-                                                  itemCount: product
-                                                      .specifications.length,
-                                                  itemBuilder:
-                                                      (BuildContext ctxt,
-                                                          int index) {
-                                                    return Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      children: <Widget>[
-                                                        Row(
-                                                          children: <Widget>[
-                                                            Expanded(
-                                                                flex: 4,
-                                                                child: Text(
-                                                                  product
-                                                                      .specifications[
-                                                                          index]
-                                                                      .key,
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .grey),
-                                                                )),
-                                                            Expanded(
-                                                                flex: 6,
-                                                                child: Text(
-                                                                  product
-                                                                      .specifications[
-                                                                          index]
-                                                                      .value,
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .black),
-                                                                )),
-                                                          ],
-                                                        ),
-                                                        Divider(
-                                                          thickness: 1.0,
-                                                        ),
-                                                      ],
-                                                    );
-                                                  })
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                    : SizedBox(),
-                                AnimatedCrossFade(
-                                  crossFadeState: isRated
-                                      ? CrossFadeState.showSecond
-                                      : CrossFadeState.showFirst,
-                                  duration: Duration(milliseconds: 200),
-                                  firstChild: SizedBox(
-                                    width: double.maxFinite,
-                                    child: Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            Text(
-                                              "Rate this Product",
-                                              textAlign: TextAlign.start,
-                                              style: TextStyle(
-                                                  color:
-                                                      ThemeColors.themeColor5,
-                                                  fontSize: 14.0,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            SizedBox(
-                                              height: 10.0,
-                                            ),
-                                            Row(
-                                              children: <Widget>[
-                                                RatingBar(
-                                                  minRating: 1,
-                                                  initialRating: 5,
-                                                  itemBuilder:
-                                                      (context, index) => Icon(
-                                                    Icons.star,
-                                                    color: Colors.amber,
                                                   ),
-                                                  onRatingUpdate: (newrating) {
-                                                    rating =
-                                                        newrating.toString();
-                                                  },
-                                                  itemCount: 5,
-                                                  itemSize: 32.0,
-                                                  direction: Axis.horizontal,
                                                 ),
-                                                Spacer(),
-                                                RaisedButton(
-                                                  color: Colors.amber,
-                                                  onPressed: () {
+                                              ),
+                                              Text(
+                                                "₹ ${product.sellingAmount}",
+                                                style: TextStyle(
+                                                  color:
+                                                      ThemeColors.themeColor5,
+                                                  fontSize: 16.0,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                        0, 8.0, 0, 2),
+                                                child: InkWell(
+                                                  onTap: () {
                                                     if (isSignedIn) {
-                                                      rateProduct(rating);
+                                                      getAddorRemoveWishlist();
                                                     } else {
                                                       Navigator.pushNamed(
                                                           context,
@@ -768,20 +601,21 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                               .routeName);
                                                     }
                                                   },
-                                                  child: Text(
-                                                    "Rate This Product",
-                                                    style: TextStyle(
-                                                        color: Colors.white),
+                                                  child: Icon(
+                                                    isWishListed
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    color: Colors.red,
                                                   ),
-                                                )
-                                              ],
-                                            ),
-                                          ],
-                                        ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  secondChild: SizedBox(
+                                  SizedBox(
                                     width: double.maxFinite,
                                     child: Card(
                                       child: Padding(
@@ -791,7 +625,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                               CrossAxisAlignment.start,
                                           children: <Widget>[
                                             Text(
-                                              "Your Rating",
+                                              "Description",
                                               textAlign: TextAlign.start,
                                               style: TextStyle(
                                                   color:
@@ -800,141 +634,405 @@ class _ProductDetailsState extends State<ProductDetails> {
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             SizedBox(
-                                              height: 10.0,
+                                              height: 8.0,
                                             ),
-                                            RatingBarIndicator(
-                                              rating: double.parse(
-                                                  product.shopeeRating.isEmpty
-                                                      ? "0"
-                                                      : product.shopeeRating),
-                                              itemBuilder: (context, index) =>
-                                                  Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
+                                            Text(
+                                              product.shortDescription,
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                color: ThemeColors.themeColor5,
+                                                fontSize: 14.0,
                                               ),
-                                              itemCount: 5,
-                                              itemSize: 32.0,
-                                              direction: Axis.horizontal,
+                                            ),
+                                            SizedBox(
+                                              height: 8.0,
                                             ),
                                           ],
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  height: 8.0,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    children: <Widget>[
-                                      Text(
-                                        "Products from the seller",
-                                        textAlign: TextAlign.start,
-                                        style: TextStyle(
-                                            color: ThemeColors.themeColor5,
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Spacer(),
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.pushNamed(
-                                              context, '/merchantdetails');
-                                        },
-                                        child: InkWell(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    MerchantProfile(
-                                                  merchantId:
-                                                      product.merchantId,
+                                  product.features.isNotEmpty
+                                      ? Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: <Widget>[
+                                                Text(
+                                                  "Features",
+                                                  textAlign: TextAlign.start,
+                                                  style: TextStyle(
+                                                      color: ThemeColors
+                                                          .themeColor5,
+                                                      fontSize: 14.0,
+                                                      fontWeight:
+                                                          FontWeight.bold),
                                                 ),
+                                                SizedBox(
+                                                  height: 10.0,
+                                                ),
+                                                ListView.builder(
+                                                    physics:
+                                                        NeverScrollableScrollPhysics(),
+                                                    padding:
+                                                        EdgeInsets.only(top: 0),
+                                                    shrinkWrap: true,
+                                                    itemCount:
+                                                        product.features.isEmpty
+                                                            ? 0
+                                                            : product.features
+                                                                .length,
+                                                    itemBuilder:
+                                                        (BuildContext ctxt,
+                                                            int index) {
+                                                      print(product
+                                                          .features.length);
+
+                                                      return new Column(
+                                                        children: <Widget>[
+                                                          Row(
+                                                            children: <Widget>[
+                                                              Icon(
+                                                                FontAwesome
+                                                                    .circle,
+                                                                size: 8.0,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 8.0,
+                                                              ),
+                                                              Text(
+                                                                product.features[
+                                                                    index],
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14.0),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          SizedBox(
+                                                            height: 8.0,
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                  product.specifications.isNotEmpty
+                                      ? Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: <Widget>[
+                                                Text(
+                                                  "Specifications",
+                                                  textAlign: TextAlign.start,
+                                                  style: TextStyle(
+                                                      color: ThemeColors
+                                                          .themeColor5,
+                                                      fontSize: 14.0,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                SizedBox(
+                                                  height: 10.0,
+                                                ),
+                                                ListView.builder(
+                                                    physics:
+                                                        NeverScrollableScrollPhysics(),
+                                                    padding:
+                                                        EdgeInsets.only(top: 0),
+                                                    shrinkWrap: true,
+                                                    itemCount: product
+                                                        .specifications.length,
+                                                    itemBuilder:
+                                                        (BuildContext ctxt,
+                                                            int index) {
+                                                      return Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        children: <Widget>[
+                                                          Row(
+                                                            children: <Widget>[
+                                                              Expanded(
+                                                                  flex: 4,
+                                                                  child: Text(
+                                                                    product
+                                                                        .specifications[
+                                                                            index]
+                                                                        .key,
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .grey),
+                                                                  )),
+                                                              Expanded(
+                                                                  flex: 6,
+                                                                  child: Text(
+                                                                    product
+                                                                        .specifications[
+                                                                            index]
+                                                                        .value,
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black),
+                                                                  )),
+                                                            ],
+                                                          ),
+                                                          Divider(
+                                                            thickness: 1.0,
+                                                          ),
+                                                        ],
+                                                      );
+                                                    })
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                  AnimatedCrossFade(
+                                    crossFadeState: isRated
+                                        ? CrossFadeState.showSecond
+                                        : CrossFadeState.showFirst,
+                                    duration: Duration(milliseconds: 200),
+                                    firstChild: SizedBox(
+                                      width: double.maxFinite,
+                                      child: Card(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                "Rate this Product",
+                                                textAlign: TextAlign.start,
+                                                style: TextStyle(
+                                                    color:
+                                                        ThemeColors.themeColor5,
+                                                    fontSize: 14.0,
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                               ),
-                                            );
-                                          },
-                                          child: Text(
-                                            "View Seller Info",
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                                decoration:
-                                                    TextDecoration.underline,
-                                                color: ThemeColors.themeColor5,
-                                                fontSize: 14.0,
-                                                fontWeight: FontWeight.bold),
+                                              SizedBox(
+                                                height: 10.0,
+                                              ),
+                                              Row(
+                                                children: <Widget>[
+                                                  RatingBar(
+                                                    minRating: 1,
+                                                    initialRating: 0,
+                                                    itemBuilder:
+                                                        (context, index) =>
+                                                            Icon(
+                                                      Icons.star,
+                                                      color: Colors.amber,
+                                                    ),
+                                                    onRatingUpdate:
+                                                        (newrating) {
+                                                      rating =
+                                                          newrating.toString();
+                                                    },
+                                                    itemCount: 5,
+                                                    itemSize: 32.0,
+                                                    direction: Axis.horizontal,
+                                                  ),
+                                                  Spacer(),
+                                                  RaisedButton(
+                                                    color: Colors.amber,
+                                                    onPressed: () {
+                                                      if (isSignedIn) {
+                                                        if (rating.isEmpty) {
+                                                          _showSnackBar(
+                                                              "Please select your rating and then submit!");
+                                                        } else {
+                                                          rateProduct(rating);
+                                                        }
+                                                      } else {
+                                                        Navigator.pushNamed(
+                                                            context,
+                                                            LandingScreen
+                                                                .routeName);
+                                                      }
+                                                    },
+                                                    child: Text(
+                                                      "Rate This Product",
+                                                      style: TextStyle(
+                                                          color: Colors.white),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 16.0,
-                                ),
-                                GridView.builder(
-                                    padding: EdgeInsets.only(top: 0),
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      crossAxisSpacing: 5.0,
-                                      mainAxisSpacing: 5.0,
-                                      childAspectRatio: MediaQuery.of(context)
-                                              .size
-                                              .width /
-                                          (MediaQuery.of(context).size.height /
-                                              1.8),
                                     ),
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    scrollDirection: Axis.vertical,
-                                    // crossAxisCount: 2,
-                                    itemCount:
-                                        model.sameMerchantProducts.isEmpty
-                                            ? 0
-                                            : model.sameMerchantProducts.length,
-                                    itemBuilder: (context, index) => NearbyItem(
-                                          imagePath: model
-                                              .sameMerchantProducts[index]
-                                              .productImages[0],
-                                          productName: model
-                                              .sameMerchantProducts[index]
-                                              .productName,
-                                          isOffer: model
-                                                  .sameMerchantProducts[index]
-                                                  .isOffer ==
-                                              "yes",
-                                          isFeatured: model
-                                                  .sameMerchantProducts[index]
-                                                  .isFeature ==
-                                              "yes",
-                                          actualPrice: model
-                                              .sameMerchantProducts[index]
-                                              .actualAmount,
-                                          price: model
-                                              .sameMerchantProducts[index]
-                                              .sellingAmount,
-                                          offerPercent: model
-                                              .sameMerchantProducts[index]
-                                              .offerAmount,
-                                          category: model
-                                              .sameMerchantProducts[index]
-                                              .shopCategoryName,
-                                          productId: model
-                                              .sameMerchantProducts[index]
-                                              .productId,
-                                          isOfferTypePercent: model
-                                                  .sameMerchantProducts[index]
-                                                  .offerType ==
-                                              "percentage",
-                                        )),
-                              ],
+                                    secondChild: SizedBox(
+                                      width: double.maxFinite,
+                                      child: Card(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                "Your Rating",
+                                                textAlign: TextAlign.start,
+                                                style: TextStyle(
+                                                    color:
+                                                        ThemeColors.themeColor5,
+                                                    fontSize: 14.0,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              SizedBox(
+                                                height: 10.0,
+                                              ),
+                                              RatingBarIndicator(
+                                                rating: double.parse(
+                                                    product.shopeeRating.isEmpty
+                                                        ? "0"
+                                                        : product.shopeeRating),
+                                                itemBuilder: (context, index) =>
+                                                    Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                ),
+                                                itemCount: 5,
+                                                itemSize: 32.0,
+                                                direction: Axis.horizontal,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 8.0,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Text(
+                                          "Products from the seller",
+                                          textAlign: TextAlign.start,
+                                          style: TextStyle(
+                                              color: ThemeColors.themeColor5,
+                                              fontSize: 14.0,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Spacer(),
+                                        InkWell(
+                                          onTap: () {
+                                            Navigator.pushNamed(
+                                                context, '/merchantdetails');
+                                          },
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      MerchantProfile(
+                                                    merchantId:
+                                                        product.merchantId,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              "View Seller Info",
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                  decoration:
+                                                      TextDecoration.underline,
+                                                  color:
+                                                      ThemeColors.themeColor5,
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 16.0,
+                                  ),
+                                  GridView.builder(
+                                      padding: EdgeInsets.only(top: 0),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        crossAxisSpacing: 5.0,
+                                        mainAxisSpacing: 5.0,
+                                        childAspectRatio:
+                                            MediaQuery.of(context).size.width /
+                                                (MediaQuery.of(context)
+                                                        .size
+                                                        .height /
+                                                    1.8),
+                                      ),
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      scrollDirection: Axis.vertical,
+                                      // crossAxisCount: 2,
+                                      itemCount: model
+                                              .sameMerchantProducts.isEmpty
+                                          ? 0
+                                          : model.sameMerchantProducts.length,
+                                      itemBuilder: (context, index) =>
+                                          NearbyItem(
+                                            imagePath: model
+                                                .sameMerchantProducts[index]
+                                                .productImages[0],
+                                            productName: model
+                                                .sameMerchantProducts[index]
+                                                .productName,
+                                            isOffer: model
+                                                    .sameMerchantProducts[index]
+                                                    .isOffer ==
+                                                "yes",
+                                            isFeatured: model
+                                                    .sameMerchantProducts[index]
+                                                    .isFeature ==
+                                                "yes",
+                                            actualPrice: model
+                                                .sameMerchantProducts[index]
+                                                .actualAmount,
+                                            price: model
+                                                .sameMerchantProducts[index]
+                                                .sellingAmount,
+                                            offerPercent: model
+                                                .sameMerchantProducts[index]
+                                                .offerAmount,
+                                            category: model
+                                                .sameMerchantProducts[index]
+                                                .shopCategoryName,
+                                            productId: model
+                                                .sameMerchantProducts[index]
+                                                .productId,
+                                            isOfferTypePercent: model
+                                                    .sameMerchantProducts[index]
+                                                    .offerType ==
+                                                "percentage",
+                                          )),
+                                ],
+                              ),
                             ),
-                          ),
-                        )
-                      ],
+                          )
+                        ],
+                      ),
                     ),
                   ),
                   Visibility(

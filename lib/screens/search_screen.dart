@@ -8,12 +8,15 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:afynder/response_models/search_suggestion.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:provider/provider.dart';
+
+import 'nointernet_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   static var routeName = 'searchscreen';
@@ -31,6 +34,13 @@ class _SearchScreenState extends State<SearchScreen> {
   Response response;
 
   void getSuggestions(String searchString) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
+
     suggestionList.clear();
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
@@ -65,7 +75,7 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     } catch (e) {
-      _showSnackBar("Network Error");
+      // _showSnackBar("Network Error");
       print(e);
     }
 
@@ -108,7 +118,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   .setSearchString(_searchController.text);
 
               Provider.of<ProductSearchParams>(context, listen: true)
-                  .changeFilterParams();
+                  .changeFilterParams("1");
 
               Navigator.pop(context, jsonEncode(filterSelection.toJson()));
             },
@@ -138,7 +148,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       .setSearchString(suggestionList[index].searchKey);
 
                   Provider.of<ProductSearchParams>(context, listen: true)
-                      .changeFilterParams();
+                      .changeFilterParams("1");
 
                   Navigator.pop(context, "  ");
                 });

@@ -3,6 +3,8 @@
 
 
     <string name="app_name">aFynder</string>
+    <string name="facebook_app_id">475008996841862</string>
+    <string name="fb_login_protocol_scheme">fb475008996841862</string>
 
 
 

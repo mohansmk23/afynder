@@ -10,6 +10,7 @@ import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/productSearchSelection.dart';
 import 'package:afynder/screens/filter_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
@@ -150,7 +151,7 @@ class _NearMeState extends State<NearMe> {
                 isFiltered = false;
 
                 Provider.of<ProductSearchParams>(context, listen: true)
-                    .changeFilterParams();
+                    .changeFilterParams("1");
 
                 setState(() {});
 
@@ -320,7 +321,6 @@ class _NearMeState extends State<NearMe> {
                         : Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: ListView.builder(
-                                padding: EdgeInsets.only(bottom: 80.0),
                                 shrinkWrap: true,
                                 physics: ClampingScrollPhysics(),
                                 itemCount: Provider.of<ProductSearchParams>(
@@ -358,6 +358,123 @@ class _NearMeState extends State<NearMe> {
                                   );
                                 }),
                           ),
+                    Provider.of<ProductSearchParams>(context, listen: true)
+                            .isEmptyState
+                        ? SizedBox()
+                        : Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Provider.of<ProductSearchParams>(
+                                                  context,
+                                                  listen: false)
+                                              .filter
+                                              .pageNo ==
+                                          "1"
+                                      ? SizedBox()
+                                      : RaisedButton(
+                                          color: Colors.white,
+                                          elevation: 1,
+                                          onPressed: () {
+                                            int _currentPage = int.parse(
+                                                Provider.of<ProductSearchParams>(
+                                                        context,
+                                                        listen: true)
+                                                    .filter
+                                                    .pageNo);
+
+                                            _currentPage--;
+
+                                            Provider.of<ProductSearchParams>(
+                                                    context,
+                                                    listen: false)
+                                                .changeFilterParams(
+                                                    _currentPage.toString());
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              RotatedBox(
+                                                  quarterTurns: 2,
+                                                  child: Icon(
+                                                      Icons.arrow_right_alt,
+                                                      color: Colors.black)),
+                                              SizedBox(
+                                                width: 16.0,
+                                              ),
+                                              Text(
+                                                'Previous',
+                                                style: TextStyle(
+                                                    fontSize: 18.0,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w400),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                ),
+                                SizedBox(
+                                  width: 16.0,
+                                ),
+                                Expanded(
+                                  child: Provider.of<ProductSearchParams>(
+                                                  context,
+                                                  listen: false)
+                                              .model
+                                              .isLastPage ==
+                                          "no"
+                                      ? RaisedButton(
+                                          color: Colors.white,
+                                          elevation: 1,
+                                          onPressed: () {
+                                            int _currentPage = int.parse(
+                                                Provider.of<ProductSearchParams>(
+                                                        context,
+                                                        listen: true)
+                                                    .filter
+                                                    .pageNo);
+
+                                            _currentPage++;
+
+                                            Provider.of<ProductSearchParams>(
+                                                    context,
+                                                    listen: false)
+                                                .changeFilterParams(
+                                                    _currentPage.toString());
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                'Next',
+                                                style: TextStyle(
+                                                    fontSize: 18.0,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w400),
+                                              ),
+                                              SizedBox(
+                                                width: 8.0,
+                                              ),
+                                              Icon(
+                                                Icons.arrow_right_alt,
+                                                color: Colors.black,
+                                              )
+                                            ],
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                )
+                              ],
+                            ),
+                          ),
+                    SizedBox(
+                      height: 80.0,
+                    ),
                   ],
                 ),
               ),
@@ -413,9 +530,10 @@ class NearbyItem extends StatelessWidget {
                 children: <Widget>[
                   Stack(
                     children: <Widget>[
-                      FadeInImage.assetNetwork(
-                        image: imagePath,
-                        placeholder: 'assets/loader.gif',
+                      CachedNetworkImage(
+                        imageUrl: imagePath,
+                        placeholder: (ct, url) =>
+                            Image.asset('assets/loader.gif'),
                         width: double.infinity,
                         height: 160,
                         fit: BoxFit.cover,
@@ -478,33 +596,31 @@ class NearbyItem extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
                       children: <Widget>[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.max,
-                          children: <Widget>[
-                            Text(
-                              productName,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                              ),
-                            ),
-                            SizedBox(
-                              height: 2.0,
-                            ),
-                            Text(
-                              category,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12.0,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          productName,
+                          overflow: TextOverflow.clip,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14.0,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 2.0,
+                        ),
+                        Text(
+                          '₹ $price',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12.0,
+                          ),
                         ),
                       ],
                     ),
@@ -598,7 +714,7 @@ class AllProductsItem extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   Expanded(
-                      flex: 3,
+                      flex: 4,
                       child: Padding(
                         padding: const EdgeInsets.all(0.0),
                         child: Stack(
@@ -615,6 +731,8 @@ class AllProductsItem extends StatelessWidget {
                                     Container(
                                       color: Colors.white,
                                       child: FadeInImage.assetNetwork(
+                                        fadeInDuration:
+                                            Duration(milliseconds: 1),
                                         image: imagePath,
                                         placeholder: 'assets/loader.gif',
                                         width: double.infinity,
@@ -695,7 +813,7 @@ class AllProductsItem extends StatelessWidget {
                     width: 8.0,
                   ),
                   Expanded(
-                    flex: 7,
+                    flex: 8,
                     child: SizedBox(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -789,22 +907,22 @@ class AllProductsItem extends StatelessWidget {
                                 padding: const EdgeInsets.only(right: 16.0),
                                 child: Row(
                                   children: <Widget>[
-                                    Icon(
-                                      FontAwesome.star,
-                                      size: 12.0,
-                                      color: rating == "-"
-                                          ? Colors.grey
-                                          : Colors.amber[700],
-                                    ),
-                                    SizedBox(
-                                      width: 4.0,
-                                    ),
                                     Text(
                                       rating,
                                       style: TextStyle(
                                           color: Colors.grey,
                                           fontSize: 14.0,
                                           fontWeight: FontWeight.w700),
+                                    ),
+                                    SizedBox(
+                                      width: 4.0,
+                                    ),
+                                    Icon(
+                                      FontAwesome.star,
+                                      size: 12.0,
+                                      color: rating == "-"
+                                          ? Colors.grey
+                                          : Colors.amber[700],
                                     ),
                                   ],
                                 ),

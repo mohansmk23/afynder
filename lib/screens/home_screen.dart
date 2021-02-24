@@ -9,8 +9,11 @@ import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/filter_selection.dart';
 import 'package:afynder/response_models/homesccreen_model.dart';
 import 'package:afynder/response_models/productSearchSelection.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
 import 'package:afynder/screens/productdetails_screen.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +21,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:package_info/package_info.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -101,6 +105,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     print(await _sharedPrefManager.getAuthKey());
+
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var returned = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getNewAdditions();
+      getHotOffers();
+      getRecentProducts();
+      getCategories();
+      getVersion();
+
+      return;
+    }
+
+    dio.interceptors.add(PrettyDioLogger());
+
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -291,11 +311,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     // getProducts();
+
     getNewAdditions();
     getHotOffers();
     getRecentProducts();
     getCategories();
     getVersion();
+
     super.initState();
   }
 
@@ -344,11 +366,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               Provider.of<ProductSearchParams>(context,
                                       listen: true)
-                                  .setListingType('NewEdition');
+                                  .setListingType('NewAddition');
 
                               Provider.of<ProductSearchParams>(context,
                                       listen: true)
-                                  .changeFilterParams();
+                                  .changeFilterParams("1");
 
                               widget.popularCategorySelection(
                                 jsonEncode(filterSelection.toJson()),
@@ -414,6 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     isOfferTypePercent:
                                         newAdditionList[index].offerType ==
                                             "percentage",
+                                    price: newAdditionList[index].sellingAmount,
                                   );
                                 }),
                       ),
@@ -443,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               Provider.of<ProductSearchParams>(context,
                                       listen: true)
-                                  .changeFilterParams();
+                                  .changeFilterParams("1");
 
                               widget.popularCategorySelection(
                                 jsonEncode(filterSelection.toJson()),
@@ -566,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                   Provider.of<ProductSearchParams>(context,
                                           listen: true)
-                                      .changeFilterParams();
+                                      .changeFilterParams("1");
 
                                   widget.popularCategorySelection(
                                     jsonEncode(filterSelection.toJson()),
@@ -634,6 +657,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       isOfferTypePercent:
                                           recentProducts[index].offerType ==
                                               "percentage",
+                                      price:
+                                          newAdditionList[index].sellingAmount,
                                     );
                                   }),
                             )
@@ -665,10 +690,10 @@ class PopularCategoryItem extends StatelessWidget {
             clipBehavior: Clip.antiAliasWithSaveLayer,
             child: Stack(
               children: <Widget>[
-                FadeInImage.assetNetwork(
-                  fadeInDuration: Duration(milliseconds: 500),
-                  image: imagePath,
-                  placeholder: 'assets/loader.gif',
+                CachedNetworkImage(
+                  imageUrl: imagePath,
+                  placeholder: (context, url) =>
+                      Image.asset('assets/loader.gif'),
                   width: double.infinity,
                   height: double.infinity,
                   fit: BoxFit.fill,
@@ -748,7 +773,7 @@ class HotOffersItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
                 Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
@@ -762,9 +787,10 @@ class HotOffersItem extends StatelessWidget {
                               children: <Widget>[
                                 Container(
                                   color: Colors.white,
-                                  child: FadeInImage.assetNetwork(
-                                    image: imagePath,
-                                    placeholder: 'assets/loader.gif',
+                                  child: CachedNetworkImage(
+                                    imageUrl: imagePath,
+                                    placeholder: (context, url) =>
+                                        Image.asset('assets/loader.gif'),
                                     width: double.infinity,
                                     height: double.infinity,
                                     fit: BoxFit.cover,
@@ -850,17 +876,14 @@ class HotOffersItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.max,
                       children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Text(
-                              productName,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                              ),
-                            ),
-                            Spacer(),
-                          ],
+                        Text(
+                          "$productName",
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14.0,
+                          ),
                         ),
                         SizedBox(
                           height: 3.0,
@@ -935,22 +958,22 @@ class HotOffersItem extends StatelessWidget {
                               padding: const EdgeInsets.only(right: 16.0),
                               child: Row(
                                 children: <Widget>[
-                                  Icon(
-                                    FontAwesome.star,
-                                    size: 12.0,
-                                    color: ratings == "-"
-                                        ? Colors.grey
-                                        : Colors.amber[700],
-                                  ),
-                                  SizedBox(
-                                    width: 4.0,
-                                  ),
                                   Text(
                                     ratings,
                                     style: TextStyle(
                                         color: Colors.grey,
                                         fontSize: 14.0,
                                         fontWeight: FontWeight.w700),
+                                  ),
+                                  SizedBox(
+                                    width: 4.0,
+                                  ),
+                                  Icon(
+                                    FontAwesome.star,
+                                    size: 12.0,
+                                    color: ratings == "-"
+                                        ? Colors.grey
+                                        : Colors.amber[700],
                                   ),
                                 ],
                               ),
@@ -974,7 +997,7 @@ class HotOffersItem extends StatelessWidget {
 }
 
 class NewAdditionItem extends StatelessWidget {
-  final String imagePath, productName, category, offerPercent, productId;
+  final String imagePath, productName, category, offerPercent, productId, price;
   final bool isOffer, isFeatured, isOfferTypePercent;
 
   const NewAdditionItem(
@@ -985,12 +1008,12 @@ class NewAdditionItem extends StatelessWidget {
       this.isFeatured,
       this.offerPercent,
       this.productId,
-      this.isOfferTypePercent});
+      this.isOfferTypePercent,
+      this.price});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -1012,12 +1035,17 @@ class NewAdditionItem extends StatelessWidget {
                 children: <Widget>[
                   Stack(
                     children: <Widget>[
-                      FadeInImage.assetNetwork(
-                        image: imagePath,
-                        placeholder: 'assets/loader.gif',
-                        width: 150,
-                        height: 150,
-                        fit: BoxFit.cover,
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 2.5,
+                        child: AspectRatio(
+                          aspectRatio: 5 / 4,
+                          child: CachedNetworkImage(
+                            imageUrl: imagePath,
+                            placeholder: (context, url) =>
+                                Image.asset('assets/loader.gif'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                       Visibility(
                         visible: isFeatured,
@@ -1075,19 +1103,36 @@ class NewAdditionItem extends StatelessWidget {
                       )
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 2.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          productName,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12.0,
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width / 2.5,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 2.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            productName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12.0,
+                            ),
                           ),
-                        ),
-                      ],
+                          SizedBox(
+                            height: 4.0,
+                          ),
+                          Text(
+                            '₹ $price',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 10.0,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(

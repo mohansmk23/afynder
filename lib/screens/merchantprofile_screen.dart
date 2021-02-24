@@ -7,14 +7,17 @@ import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/merchant_details.dart';
 import 'package:afynder/response_models/merchant_product_list.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:afynder/screens/nointernet_screen.dart';
+
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'nearme_screen.dart';
@@ -36,6 +39,7 @@ class _MerchantProfileState extends State<MerchantProfile>
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoading = true;
   Response response;
+  final controller = PageController();
   MerchantDetailsModel model = new MerchantDetailsModel();
   MerchantProductsModel productsModel = new MerchantProductsModel();
   List<ProductList> productList = [];
@@ -45,6 +49,15 @@ class _MerchantProfileState extends State<MerchantProfile>
   int _selectedIndex = 0;
 
   void getMerchantsDetails() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var rnm = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getMerchantsDetails();
+      getMerchantsProducts();
+
+      return;
+    }
     setState(() {
       isLoading = true;
     });
@@ -109,7 +122,7 @@ class _MerchantProfileState extends State<MerchantProfile>
         productList = productsModel.productList.toList();
         print(model.merchantInformations.rating);
       } else {
-        _showSnackBar(parsed["message"]);
+        // _showSnackBar(parsed["message"]);
       }
     } catch (e) {
       print('merchant products');
@@ -212,7 +225,7 @@ class _MerchantProfileState extends State<MerchantProfile>
                         child: isConnectClicked ? Icon(Icons.mail) : SizedBox(),
                         onPressed: () {
                           var url =
-                              'sms: ${model.merchantInformations.shopContactNumber}?body=Hey i am interested in your product';
+                              'sms: ${model.merchantInformations.shopContactNumber}?body=Hey I\'m interested in your products / services. Sent from afynder app.';
                           launch(url);
                         },
                       ),
@@ -277,36 +290,93 @@ class _MerchantProfileState extends State<MerchantProfile>
                           child: Stack(
                               alignment: Alignment.center,
                               children: <Widget>[
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: CarouselSlider.builder(
-                                    itemCount: bannerImageList.length,
-                                    itemBuilder:
-                                        (BuildContext context, int itemIndex) =>
-                                            Container(
-                                      width: double.infinity,
-                                      color: Colors.white,
-                                      child: Image.network(
-                                        bannerImageList[itemIndex],
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    options: CarouselOptions(
-                                      height: 200,
-                                      initialPage: 0,
-                                      viewportFraction: 1.0,
-                                      enableInfiniteScroll: true,
-                                      reverse: false,
-                                      autoPlay: true,
-                                      autoPlayInterval: Duration(seconds: 3),
-                                      autoPlayAnimationDuration:
-                                          Duration(milliseconds: 800),
-                                      autoPlayCurve: Curves.fastOutSlowIn,
-                                      enlargeCenterPage: true,
-                                      scrollDirection: Axis.horizontal,
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: SizedBox(
+                                    height: 250.0,
+                                    width: double.infinity,
+                                    child: PageView.builder(
+                                      physics: BouncingScrollPhysics(),
+                                      controller: controller,
+                                      onPageChanged: (pos) {
+                                        print(pos);
+                                      },
+                                      itemCount: bannerImageList.length,
+                                      itemBuilder:
+                                          (BuildContext context, int index) {
+                                        return Image.network(
+                                          bannerImageList[index],
+                                          fit: BoxFit.none,
+                                          loadingBuilder: (BuildContext context,
+                                              Widget child,
+                                              ImageChunkEvent loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes
+                                                    : null,
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
                                     ),
                                   ),
                                 ),
+
+                                Positioned(
+                                  bottom: 36.0,
+                                  left: 16.0,
+                                  child: SmoothPageIndicator(
+                                      controller: controller,
+                                      count: bannerImageList.length,
+                                      effect: WormEffect(
+                                          spacing: 4.0,
+                                          radius: 5.0,
+                                          dotWidth: 10.0,
+                                          activeDotColor: Colors.blue,
+                                          dotHeight:
+                                              10.0), // your preferred effect
+                                      onDotClicked: (index) {}),
+                                ),
+
+                                // SizedBox(
+                                //   width: double.infinity,
+                                //   child: CarouselSlider.builder(
+                                //     itemCount: bannerImageList.length,
+                                //     itemBuilder:
+                                //         (BuildContext context, int itemIndex) =>
+                                //             Container(
+                                //       width: double.infinity,
+                                //       color: Colors.white,
+                                //       child: Image.network(
+                                //         bannerImageList[itemIndex],
+                                //         fit: BoxFit.cover,
+                                //       ),
+                                //     ),
+                                //     options: CarouselOptions(
+                                //       height: 200,
+                                //       initialPage: 0,
+                                //       viewportFraction: 1.0,
+                                //       enableInfiniteScroll: true,
+                                //       reverse: false,
+                                //       autoPlay: true,
+                                //       autoPlayInterval: Duration(seconds: 3),
+                                //       autoPlayAnimationDuration:
+                                //           Duration(milliseconds: 800),
+                                //       autoPlayCurve: Curves.fastOutSlowIn,
+                                //       enlargeCenterPage: true,
+                                //       scrollDirection: Axis.horizontal,
+                                //     ),
+                                //   ),
+                                // ),
                                 Positioned(
                                   top: 150,
                                   child: Container(
@@ -452,32 +522,38 @@ class _MerchantProfileState extends State<MerchantProfile>
 }
 
 Widget products(List<ProductList> productList, BuildContext context) {
-  return GridView.builder(
-      padding: EdgeInsets.only(top: 0),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 5.0,
-        mainAxisSpacing: 5.0,
-        childAspectRatio: MediaQuery.of(context).size.width /
-            (MediaQuery.of(context).size.height / 1.8),
-      ),
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      scrollDirection: Axis.vertical,
-      // crossAxisCount: 2,
-      itemCount: productList.isEmpty ? 0 : productList.length,
-      itemBuilder: (context, index) => NearbyItem(
-            imagePath: productList[index].productImages[0],
-            productName: productList[index].productName,
-            isOffer: productList[index].isOffer == "yes",
-            isFeatured: productList[index].isFeature == "yes",
-            actualPrice: productList[index].actualAmount,
-            price: productList[index].sellingAmount,
-            offerPercent: productList[index].offerAmount,
-            category: productList[index].shopCategoryName,
-            productId: productList[index].productId,
-            isOfferTypePercent: productList[index].offerType == "percentage",
-          ));
+  return Container(
+    color: Colors.transparent,
+    child: productList.isEmpty
+        ? emptyState()
+        : GridView.builder(
+            padding: EdgeInsets.only(top: 0),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 5.0,
+              mainAxisSpacing: 5.0,
+              childAspectRatio: MediaQuery.of(context).size.width /
+                  (MediaQuery.of(context).size.height / 1.8),
+            ),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.vertical,
+            // crossAxisCount: 2,
+            itemCount: productList.isEmpty ? 0 : productList.length,
+            itemBuilder: (context, index) => NearbyItem(
+                  imagePath: productList[index].productImages[0],
+                  productName: productList[index].productName,
+                  isOffer: productList[index].isOffer == "yes",
+                  isFeatured: productList[index].isFeature == "yes",
+                  actualPrice: productList[index].actualAmount,
+                  price: productList[index].sellingAmount,
+                  offerPercent: productList[index].offerAmount,
+                  category: productList[index].shopCategoryName,
+                  productId: productList[index].productId,
+                  isOfferTypePercent:
+                      productList[index].offerType == "percentage",
+                )),
+  );
 }
 
 Widget info(MerchantDetailsModel model) {
@@ -758,5 +834,36 @@ Widget info(MerchantDetailsModel model) {
         ),
       ),
     ],
+  );
+}
+
+Widget emptyState() {
+  return Container(
+    color: Colors.grey[200],
+    child: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          SizedBox(
+            height: 48.0,
+          ),
+          Image.asset(
+            'assets/noproductsillus.png',
+            height: 200.0,
+            width: double.maxFinite,
+          ),
+          Text("No products available yet!",
+              style: TextStyle(
+                  color: Colors.blueGrey[800],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.0)),
+          SizedBox(
+            height: 8.0,
+          ),
+          Text("No Products from this seller",
+              style: TextStyle(color: Colors.blueGrey[600], fontSize: 14.0)),
+        ],
+      ),
+    ),
   );
 }

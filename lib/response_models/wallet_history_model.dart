@@ -45,12 +45,13 @@ class WalletHistory {
   String action;
   String actionby;
   String actionAmount;
-  Null redeemMerchantPreviousAmount;
-  Null receiveMerchantPreviousAmount;
+  var redeemMerchantPreviousAmount;
+  var receiveMerchantPreviousAmount;
   String createdDate;
   String updatedDate;
-  String updatedIpaddress;
+  var updatedIpaddress;
   String shopLogo;
+  String logDescription;
 
   WalletHistory(
       {this.autoId,
@@ -74,7 +75,8 @@ class WalletHistory {
       this.createdDate,
       this.updatedDate,
       this.updatedIpaddress,
-      this.shopLogo});
+      this.shopLogo,
+      this.logDescription});
 
   WalletHistory.fromJson(Map<String, dynamic> json) {
     autoId = json['auto_id'];
@@ -82,7 +84,7 @@ class WalletHistory {
     logType = json['LogType'];
     newMerchantId = json['newMerchantId'];
     newMerchantCode = json['newMerchantCode'];
-    newMerchantName = json['newMerchantName'];
+    newMerchantName = json[' newMerchantName'];
     referalPersonType = json['referalPersonType'];
     referanceCode = json['ReferanceCode'];
     referarId = json['referarId'];
@@ -98,8 +100,8 @@ class WalletHistory {
     createdDate = json['CreatedDate'];
     updatedDate = json['UpdatedDate'];
     updatedIpaddress = json['UpdatedIpaddress'];
-    autoId = json['autoId'];
     shopLogo = json['shopLogo'];
+    logDescription = json['logDescription'];
   }
 
   Map<String, dynamic> toJson() {
@@ -109,7 +111,7 @@ class WalletHistory {
     data['LogType'] = this.logType;
     data['newMerchantId'] = this.newMerchantId;
     data['newMerchantCode'] = this.newMerchantCode;
-    data['newMerchantName'] = this.newMerchantName;
+    data[' newMerchantName'] = this.newMerchantName;
     data['referalPersonType'] = this.referalPersonType;
     data['ReferanceCode'] = this.referanceCode;
     data['referarId'] = this.referarId;
@@ -125,8 +127,8 @@ class WalletHistory {
     data['CreatedDate'] = this.createdDate;
     data['UpdatedDate'] = this.updatedDate;
     data['UpdatedIpaddress'] = this.updatedIpaddress;
-    data['autoId'] = this.autoId;
     data['shopLogo'] = this.shopLogo;
+    data['logDescription'] = this.logDescription;
     return data;
   }
 }

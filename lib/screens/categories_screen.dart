@@ -6,6 +6,7 @@ import 'package:afynder/constants/strings.dart';
 import 'package:afynder/response_models/category_model.dart';
 import 'package:afynder/response_models/category_selection.dart';
 import 'package:afynder/screens/dashboard_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:afynder/constants/api_urls.dart';
+
+import 'nointernet_screen.dart';
 
 class Categories extends StatefulWidget {
   static const routeName = "/categories";
@@ -37,6 +40,15 @@ class _CategoriesState extends State<Categories> {
   List<CategoryList> categoryList = [];
 
   void getCategories() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      var returned = await Navigator.pushNamed(context, NoInternet.routeName);
+
+      getCategories();
+
+      return;
+    }
+
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
@@ -68,6 +80,13 @@ class _CategoriesState extends State<Categories> {
   }
 
   void postCategories(CategorySelectionModel model) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      Navigator.pushNamed(context, NoInternet.routeName);
+
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });

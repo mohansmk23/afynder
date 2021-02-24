@@ -11,7 +11,7 @@ import 'package:afynder/screens/nearme_screen.dart';
 import 'package:afynder/screens/offermap_screen.dart';
 import 'package:afynder/screens/profile_screen.dart';
 import 'package:afynder/screens/search_screen.dart';
-import 'package:animate_icons/animate_icons.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,14 +45,28 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   Future<bool> onWillPop() {
     DateTime now = DateTime.now();
-    if (currentBackPressTime == null ||
-        now.difference(currentBackPressTime) > Duration(seconds: 2)) {
-      currentBackPressTime = now;
-      _showSnackBar("Press Back to Exit");
-      return Future.value(false);
+
+    if (Provider.of<ProductSearchParams>(context, listen: true).filter.pageNo ==
+        '1') {
+      if (currentBackPressTime == null ||
+          now.difference(currentBackPressTime) > Duration(seconds: 2)) {
+        currentBackPressTime = now;
+        _showSnackBar("Press Back to Exit");
+        return Future.value(false);
+      }
+      SystemNavigator.pop(animated: true);
+      return Future.value(true);
+    } else {
+      int _currentPage = int.parse(
+          Provider.of<ProductSearchParams>(context, listen: true)
+              .filter
+              .pageNo);
+
+      _currentPage--;
+
+      Provider.of<ProductSearchParams>(context, listen: false)
+          .changeFilterParams(_currentPage.toString());
     }
-    SystemNavigator.pop(animated: true);
-    return Future.value(true);
   }
 
   void _showSnackBar(String message) {
@@ -77,7 +91,13 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
   void _onItemTapped(int index) {
     if (index == 1) {
       Provider.of<ProductSearchParams>(context, listen: false)
-          .changeFilterParams();
+          .changeFilterParams("1");
+    } else if (index == 0) {
+      Provider.of<ProductSearchParams>(context, listen: true)
+          .setSearchString('');
+    } else if (index == 2) {
+      Provider.of<ProductSearchParams>(context, listen: true)
+          .setSearchString('');
     }
     setState(() {
       _currentIndex = index;
@@ -85,6 +105,8 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
   }
 
   checkLogin() async {
+    print('${await _sharedPrefManager.iSignedIn()} muruga');
+    print(await _sharedPrefManager.iSignedIn());
     if (!await _sharedPrefManager.iSignedIn()) {
       Navigator.pushNamed(context, LandingScreen.routeName);
     }
@@ -127,6 +149,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
       vsync: this,
       duration: Duration(milliseconds: 400),
     );
+
     checkLogin();
     getProfileImage();
 
@@ -140,7 +163,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
         popularCategorySelection: (selection) {
           categorySelection = selection;
           Provider.of<ProductSearchParams>(context, listen: false)
-              .changeFilterParams();
+              .changeFilterParams("1");
           _onItemTapped(1);
         },
       ),
@@ -161,7 +184,10 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
         actions: [
           InkWell(
               onTap: () async {
-                if (!isSearched) {
+                if (!(Provider.of<ProductSearchParams>(context, listen: true)
+                        .filter
+                        .searchString !=
+                    '')) {
                   var filterSelection = await Navigator.pushNamed(
                       context, SearchScreen.routeName);
 
@@ -177,7 +203,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                             .searchString;
 
                     Provider.of<ProductSearchParams>(context, listen: false)
-                        .changeFilterParams();
+                        .changeFilterParams("1");
 
                     _onItemTapped(1);
                   }
@@ -186,7 +212,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                   Provider.of<ProductSearchParams>(context, listen: false)
                       .setSearchString('');
                   Provider.of<ProductSearchParams>(context, listen: false)
-                      .changeFilterParams();
+                      .changeFilterParams("1");
                   _onItemTapped(1);
                 }
               },
@@ -222,7 +248,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                     print(jsonEncode(selection));
 
                     Provider.of<ProductSearchParams>(context, listen: false)
-                        .changeFilterParams();
+                        .changeFilterParams("1");
 
                     _onItemTapped(1);
                   }

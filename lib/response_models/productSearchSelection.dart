@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:afynder/constants/api_urls.dart';
 import 'package:afynder/constants/connection.dart';
@@ -6,12 +7,15 @@ import 'package:afynder/constants/sharedPrefManager.dart';
 import 'package:afynder/constants/strings.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import 'all_products_model.dart';
 import 'filter_selection.dart';
 
 class ProductSearchParams extends ChangeNotifier {
   List<ProductList> productList = [];
+  AllProducts model;
+
   SharedPrefManager _sharedPrefManager = SharedPrefManager();
   FilterSelection filter = new FilterSelection(
       apiMethod: "productList",
@@ -22,24 +26,31 @@ class ProductSearchParams extends ChangeNotifier {
       sorting: "",
       priceFrom: "",
       priceTo: "",
+      pageNo: "1",
+      apkPageName: "listingPage",
       mobileUniqueCode: "");
   bool isLoading = false, isFiltered = false, isEmptyState = true;
 
-  Future<void> changeFilterParams() async {
+  Future<void> changeFilterParams(String pageNo) async {
+    filter.pageNo = pageNo;
+
     isLoading = true;
+    notifyListeners();
 
     dio.options.headers["authorization"] =
         await _sharedPrefManager.getAuthKey();
 
+    dio.interceptors.add(PrettyDioLogger());
+
     try {
       Response response = await dio.post(allProducts, data: filter.toJson());
 
-      print('${filter.toJson()} kushi');
+      print('${jsonEncode(filter)} kushi');
 
       final Map<String, dynamic> parsed = json.decode(response.data);
       print(parsed);
       if (parsed["status"] == "success") {
-        final AllProducts model = AllProducts.fromJson(parsed);
+        model = AllProducts.fromJson(parsed);
         productList = model.productList.toList();
         isEmptyState = false;
       } else {
@@ -96,7 +107,9 @@ class ProductSearchParams extends ChangeNotifier {
         listingType: "",
         sorting: "",
         priceFrom: "",
+        pageNo: "1",
         priceTo: "",
+        apkPageName: "listingPage",
         mobileUniqueCode: "");
     notifyListeners();
   }
